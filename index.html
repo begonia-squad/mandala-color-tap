@@ -69,7 +69,7 @@
   body.dark .sheethead{box-shadow:0 1px 0 rgba(255,255,255,.04);}
   .content{flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:22px;}
   .section-label{font-size:19px; font-weight:800; letter-spacing:.2px; margin:14px 0 14px;}
-  .section-label.tiny{font-size:14px; letter-spacing:1.6px; color:var(--muted);}
+  .section-label.tiny{font-size:12px; font-weight:800; letter-spacing:1.4px; color:var(--text);}
 
   /* footer bar */
   .footer{display:flex; align-items:center; justify-content:space-between; padding:16px 20px calc(16px + env(safe-area-inset-bottom)); background:var(--panel); border-top:1.5px solid color-mix(in srgb, var(--text) 8%, transparent);}
@@ -87,7 +87,7 @@
     background:
       radial-gradient(120% 80% at 50% 120%, var(--accent-soft) 0%, rgba(0,0,0,0) 60%),
       var(--bg);}
-  .home-art{position:absolute; top:-44px; left:-64px; width:64%; max-width:340px; pointer-events:none; opacity:.98; animation:floaty 7s ease-in-out infinite; transform-origin:40% 40%;}
+  .home-art{position:absolute; top:-44px; left:-64px; width:64%; max-width:340px; pointer-events:none; opacity:.98; animation:floaty 4.2s ease-in-out infinite; transform-origin:40% 40%;}
   @keyframes floaty{0%,100%{transform:translateY(0) rotate(0deg);} 50%{transform:translateY(10px) rotate(2deg);}}
   .home-mid{flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; width:100%; padding:0 28px;}
   .home-title{font-family:"Fredoka","Nunito",sans-serif; font-size:15vw; line-height:.98; font-weight:600; text-align:center; letter-spacing:.5px; margin-top:32vh;}
@@ -199,12 +199,12 @@
   .tray-grip-float:active .tray-grip{opacity:.8; width:60px;}
   .colortray{position:relative; background:var(--panel); display:flex; flex-direction:column;
     border-top-left-radius:var(--tray-radius); border-top-right-radius:var(--tray-radius);
-    height:calc(var(--swatch-row-h) + var(--pad-y) * 2 + env(safe-area-inset-bottom)); transition:height .32s cubic-bezier(.22,.61,.36,1); overflow:hidden;
+    height:calc(var(--swatch-row-h) + var(--pad-y) + 6px + env(safe-area-inset-bottom)); transition:height .32s cubic-bezier(.22,.61,.36,1); overflow:hidden;
     padding-bottom:env(safe-area-inset-bottom); box-shadow:0 -10px 30px -12px rgba(120,80,40,.30);}
   .tray-body{flex:1 1 auto; min-height:0; position:relative; overflow:hidden;}
   .colortray.expanded .tray-body{overflow-y:auto; -webkit-overflow-scrolling:touch;}
 
-  .tray-compact{display:flex; align-items:center; gap:var(--gap); padding:var(--pad-y) var(--pad-x);}
+  .tray-compact{display:flex; align-items:center; gap:var(--gap); padding:var(--pad-y) var(--pad-x) 6px;}
   .swatch-viewport{flex:1; height:var(--swatch-row-h); overflow:hidden; touch-action:none;}
   .swatch-track{display:flex; height:100%; gap:var(--gap); transition:transform .28s cubic-bezier(.22,.61,.36,1);}
   .swatch-track.vert{flex-direction:column;}
@@ -219,6 +219,7 @@
   .sw:active{transform:scale(.92);}
   .swatch-page .sw:active{transform:none;}
   .sw.active{transform:scale(1.08); box-shadow:0 4px 10px rgba(0,0,0,.18);}
+  .swatch-page .sw.active{transform:none;}
   .sw .pin{width:12px;height:12px;border-radius:50%;background:#fff;opacity:0;box-shadow:0 0 0 2px rgba(0,0,0,.35);}
   .sw.active .pin{opacity:1;}
   .sw.eraser{background:var(--canvas)!important;border-color:var(--eraser-ring);}
@@ -273,7 +274,7 @@
         <button class="btn btn-outline" onclick="openSettings('home')">SETTINGS</button>
       </div>
     </div>
-    <div class="version" id="ver">v1.6.0</div>
+    <div class="version" id="ver">v1.6.2</div>
   </section>
 
   <!-- ================= TUTORIAL ================= -->
@@ -545,7 +546,7 @@ const DEFAULT_PALETTE = ['#4f77f2','#f8e853','#ea1414','#a32fe2','#2f9021']; // 
 /* ---------- 4. Persistent state (localStorage, fully local) ---------- */
 const KEY='mandalaColorTap.v2';
 const defaultState = {
-  settings:{ theme:'light', music:55, sfx:75, swatchDir:'h' },
+  settings:{ theme:'light', music:35, sfx:45, swatchDir:'h' },
   palette: DEFAULT_PALETTE.slice(),
   selected:'A1',
   progress:{},   // { A1:{regionId:color,...} }
@@ -898,8 +899,9 @@ function sizeTray(){
   }
 }
 function expandTray(){ if(trayExpanded) return; trayExpanded=true; document.getElementById('colorTray').classList.add('expanded'); buildTrayBody(); sizeTray(); sfxPop(); }
-function collapseTray(){ if(!trayExpanded) return; trayExpanded=false; document.getElementById('colorTray').classList.remove('expanded'); document.getElementById('colorTray').style.height=''; buildTrayBody(); }
+function collapseTray(){ if(!trayExpanded) return; trayExpanded=false; document.getElementById('colorTray').classList.remove('expanded'); document.getElementById('colorTray').style.height=''; buildTrayBody(); refreshCanvasFit(); }
 function toggleTray(){ trayExpanded?collapseTray():expandTray(); }
+document.getElementById('colorTray').addEventListener('transitionend', e=>{ if(e.propertyName==='height') refreshCanvasFit(); });
 function toggleDir(){ swatchDir = (swatchDir==='h')?'v':'h'; state.settings.swatchDir=swatchDir; persist(); if(!trayExpanded) buildTrayBody(); updateDirIcon(); sfxPop(); }
 function updateDirIcon(){ const b=document.querySelector('#colorTray .tray-dir'); if(b) b.innerHTML = swatchDir==='h'?ICON_HORIZ:ICON_VERT; }
 
@@ -1161,6 +1163,16 @@ wrap.addEventListener('wheel',e=>{
 function dist(a,b){ return Math.hypot(a.x-b.x,a.y-b.y); }
 function mid(a,b){ return {x:(a.x+b.x)/2,y:(a.y+b.y)/2}; }
 function fitView(){ fitScale=1; scale=1; tx=0; ty=0; applyTransform(); }
+/* The canvas <svg> sometimes doesn't repaint to the new size after the tray
+   expands/collapses (mobile WebKit). Nudge it to re-fit without a visible flash. */
+function refreshCanvasFit(){
+  if(!svgEl) return;
+  const vb = svgEl.getAttribute('viewBox');
+  if(vb) svgEl.setAttribute('viewBox', vb);   // re-evaluate viewport mapping
+  applyTransform();
+  svgEl.style.transform = 'translateZ(0)';     // force a composite repaint
+  requestAnimationFrame(()=>{ if(svgEl) svgEl.style.transform=''; });
+}
 
 /* ---------- 12. Decorative art (home + tutorial) ---------- */
 function renderHomeArt(){
@@ -1189,7 +1201,7 @@ function initAudio(){
 }
 function sfxPop(){
   if(!actx) return; const v=state.settings.sfx/100; if(v<=0) return;
-  sfxGain.gain.value=v*0.5;
+  sfxGain.gain.value=v*0.3;
   const o=actx.createOscillator(), g=actx.createGain();
   o.type='triangle'; o.frequency.setValueAtTime(520,actx.currentTime);
   o.frequency.exponentialRampToValueAtTime(880,actx.currentTime+0.06);
@@ -1221,7 +1233,7 @@ function startMusicIfNeeded(){
   if(want && !musicOn){ musicOn=true; playPad(); musicTimer=setInterval(playPad,4200); }
   if(!want && musicOn){ musicOn=false; clearInterval(musicTimer); }
 }
-function updateMusicVol(){ if(musicGain) musicGain.gain.value=(state.settings.music/100)*0.5; startMusicIfNeeded(); }
+function updateMusicVol(){ if(musicGain) musicGain.gain.value=(state.settings.music/100)*0.26; startMusicIfNeeded(); }
 
 /* ---------- 14. Toast + boot ---------- */
 let toastTimer=null;
