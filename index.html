@@ -292,7 +292,7 @@
         <button class="btn btn-outline" onclick="openSettings('home')">SETTINGS</button>
       </div>
     </div>
-    <div class="version" id="ver">v1.14.6</div>
+    <div class="version" id="ver">v1.14.7</div>
   </section>
 
   <!-- ================= TUTORIAL ================= -->
@@ -1643,14 +1643,28 @@ function updateMusicVol(){ initAudio(); applyMusicVol(); startMusicIfNeeded(); }
 let toastTimer=null;
 function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'),1700); }
 
-// resume audio on first interaction (browser/iOS autoplay policy) — resume INSIDE the gesture
+// Start audio on the first interaction (browser/iOS autoplay policy) — resume INSIDE the gesture
 function unlockAudio(){
   initAudio();
-  const go=()=>startMusicIfNeeded();
-  if(actx && actx.state==='suspended'){ try{ actx.resume().then(go, go); }catch(_){ go(); } } else go();
-  ['pointerdown','touchend','mousedown','keydown'].forEach(ev=>document.removeEventListener(ev,unlockAudio));
+  const start=()=>startMusicIfNeeded();
+  if(actx && actx.state==='suspended'){ try{ actx.resume().then(start, start); }catch(_){ start(); } } else start();
+  ['pointerdown','touchstart','touchend','mousedown','keydown','click'].forEach(ev=>document.removeEventListener(ev,unlockAudio,true));
 }
-['pointerdown','touchend','mousedown','keydown'].forEach(ev=>document.addEventListener(ev,unlockAudio));
+['pointerdown','touchstart','touchend','mousedown','keydown','click'].forEach(ev=>document.addEventListener(ev,unlockAudio,true));
+
+/* Try to start the music the instant the menu appears. Browsers block autoplay-with-sound until
+   a user gesture EXCEPT for installed PWAs and pages the browser already trusts — there this starts
+   with no click. Where it's blocked, the first tap/click/key above starts it. Either way the tracks
+   are decoded eagerly right now, so when playback is allowed it begins instantly (no loading lag). */
+function tryStartAudio(){
+  initAudio();
+  if(actx && actx.state==='suspended'){ try{ actx.resume(); }catch(_){} }
+  startMusicIfNeeded();
+}
+tryStartAudio();
+window.addEventListener('load', tryStartAudio);
+window.addEventListener('pageshow', tryStartAudio);
+document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) tryStartAudio(); });
 
 applyTheme();
 renderHomeArt();
