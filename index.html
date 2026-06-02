@@ -325,7 +325,7 @@
         <button class="btn btn-outline" onclick="openSettings('home')">SETTINGS</button>
       </div>
     </div>
-    <div class="version" id="ver">v1.15.6</div>
+    <div class="version" id="ver">v1.15.7</div>
   </section>
 
   <!-- ================= TUTORIAL ================= -->
@@ -735,6 +735,15 @@ function applyCheat(){
   } else if(code==='DISCO'){
     state.cheats.disco=!state.cheats.disco; persist(); updateFx();
     toast(state.cheats.disco?'Cheat ON — disco time':'Cheat OFF — lights up');
+  } else if(code==='OFFMAN'){
+    const c=state.cheats, wasGradient=c.gradient, wasJeff=c.itsjeff;
+    Object.keys(c).forEach(k=>{ c[k]=false; });        // switch every cheat off
+    if(wasGradient) convertAllFills(false);             // revert gradient fills to solid
+    persist(); updateTrace(); updateFx();
+    if(wasJeff){ stopMusicNode(); startMusicIfNeeded(); }   // back to normal music
+    if(curMandala && document.getElementById('screen-color').classList.contains('active')){ renderMandala(); applyTransform(); updateTrace(); }
+    if(document.getElementById('screen-select').classList.contains('active')) renderGallery();
+    toast('All cheats OFF');
   } else if(code==='RESETMAN'){
     inp.value='';
     openConfirm('Reset everything?', 'Wipes all colouring and progress and relocks every level except A1, A2, A3 and B1. This cannot be undone.', doResetMan);
