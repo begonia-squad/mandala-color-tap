@@ -36,7 +36,7 @@
     --card-shadow:0 6px 18px -8px rgba(0,0,0,.55);
   }
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent; margin:0; padding:0;}
-  html,body{height:100%;}
+  html,body{height:100%; -webkit-text-size-adjust:100%; text-size-adjust:100%;}
   body{
     font-family:"Nunito",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
     background:
@@ -145,6 +145,8 @@
   .mthumb.locked{background:var(--panel2); border-color:transparent; box-shadow:none;}
   body.dark .mthumb.locked{background:var(--panel2);}
   .mthumb > svg{width:88%; height:88%;}
+  .mthumb > img.rthumb{width:94%; height:94%; object-fit:contain; image-rendering:auto; -webkit-user-drag:none;}
+  .mthumb.locked > img.rthumb{opacity:.35; filter:grayscale(1);}
   .mthumb .badge{position:absolute; top:8px; right:8px; width:21px; height:21px; border-radius:50%; background:var(--accent); display:none; align-items:center; justify-content:center; box-shadow:0 0 0 2px var(--bg);}
   .mthumb .badge.check{background:var(--text); color:var(--bg);}
   .mthumb .badge.check svg{width:13px; height:13px;}
@@ -275,7 +277,7 @@
         <button class="btn btn-outline" onclick="openSettings('home')">SETTINGS</button>
       </div>
     </div>
-    <div class="version" id="ver">v1.8.1</div>
+    <div class="version" id="ver">v1.9.0</div>
   </section>
 
   <!-- ================= TUTORIAL ================= -->
@@ -367,6 +369,8 @@
     <div class="content">
       <div style="font-size:16px;color:var(--text);margin-bottom:18px">A1 – A10</div>
       <div class="grid2" id="mandalaGrid"></div>
+      <div style="font-size:16px;color:var(--text);margin:26px 0 18px">B1 – B10</div>
+      <div class="grid2" id="mandalaGridB"></div>
     </div>
     <div class="footer">
       <button class="ghostlink" onclick="openPalette('select')">
@@ -526,6 +530,15 @@ const SEEDS = [
   { sym:18, rings:[{f0:0,f1:.15,nMul:1,motif:'ring'},{f0:.15,f1:.28,nMul:1,motif:'tri'},{f0:.28,f1:.42,nMul:1,motif:'tri',phase:.5},{f0:.42,f1:.56,nMul:1,motif:'tri'}], petal:{notch:.56,shoulder:.72,tip:.95,width:1.0} },
 ];
 const MANDALAS = SEEDS.map((s,i)=>({ id:'A'+(i+1), opts:s, geo:buildMandala(s) }));
+// ---- B set: raster line-art coloring pages (tap-to-fill via region-id maps) ----
+const B_DEFS = [
+  {n:1,fill:33},{n:2,fill:73},{n:3,fill:129},{n:4,fill:168},{n:5,fill:192},
+  {n:6,fill:208},{n:7,fill:208},{n:8,fill:271},{n:9,fill:297},{n:10,fill:688}
+];
+B_DEFS.forEach(b=>MANDALAS.push({
+  id:'B'+b.n, raster:true, fillable:b.fill,
+  src:'b/B'+b.n+'.png', thumb:'b/B'+b.n+'.thumb.png'
+}));
 
 /* ---------- 3. Color data ---------- */
 // Generate a broad, tasteful spectrum: each hue family as a light->dark row, plus neutrals.
@@ -645,24 +658,40 @@ function mandalaSVGString(geo, fills, opts){
   });
   return s+'</svg>';
 }
-function isUnlocked(idx){ return idx<3 || !!state.done[MANDALAS[idx-1].id]; }
+function prereqId(idx){
+  const m=MANDALAS[idx];
+  if(m && m.id==='B2') return 'A10';
+  return MANDALAS[idx-1] ? MANDALAS[idx-1].id : '';
+}
+function isUnlocked(idx){
+  const m=MANDALAS[idx];
+  if(!m) return false;
+  if(!m.raster) return idx<3 || !!state.done[MANDALAS[idx-1].id];   // A set
+  if(m.id==='B1') return true;                                      // first B always open
+  if(m.id==='B2') return !!state.done['A10'];                       // pass A10 to unlock B2
+  return !!state.done[MANDALAS[idx-1].id];                          // B3+ chain
+}
 const LOCK_SVG='<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 1a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2h-1V6a5 5 0 0 0-5-5zm3 8H9V6a3 3 0 0 1 6 0v3z"/></svg>';
 function renderGallery(){
-  const grid=document.getElementById('mandalaGrid'); grid.innerHTML='';
+  const gridA=document.getElementById('mandalaGrid'); gridA.innerHTML='';
+  const gridB=document.getElementById('mandalaGridB'); if(gridB) gridB.innerHTML='';
   MANDALAS.forEach((m,idx)=>{
     const locked=!isUnlocked(idx);
     const card=document.createElement('div'); card.className='mcard'+(locked?' locked':'');
     const thumb=document.createElement('div');
     thumb.className='mthumb'+(state.selected===m.id?' sel':'')+(state.done[m.id]?' done':'')+(locked?' locked':'');
-    thumb.innerHTML=mandalaSVGString(m.geo, locked?null:state.progress[m.id], {sw:1.4})
+    const art = m.raster
+      ? `<img class="rthumb" src="${m.thumb}" alt="${m.id}" draggable="false">`
+      : mandalaSVGString(m.geo, locked?null:state.progress[m.id], {sw:1.4});
+    thumb.innerHTML=art
       +'<div class="badge dot"></div>'
       +'<div class="badge check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg></div>'
       +(locked?`<div class="lockbadge">${LOCK_SVG}</div>`:'');
     const cap=document.createElement('div'); cap.className='cap'+(state.selected===m.id?' sel':'')+(state.done[m.id]?' done':''); cap.textContent=m.id;
     card.appendChild(thumb); card.appendChild(cap);
-    if(locked){ card.onclick=()=>{ toast(`Finish ${MANDALAS[idx-1].id} to unlock ${m.id}`); sfxPop(); }; }
+    if(locked){ const pre=prereqId(idx); card.onclick=()=>{ toast(`Finish ${pre} to unlock ${m.id}`); sfxPop(); }; }
     else card.onclick=()=>{ state.selected=m.id; persist(); renderGallery(); sfxPop(); };
-    grid.appendChild(card);
+    (m.raster && gridB ? gridB : gridA).appendChild(card);
   });
 }
 
@@ -678,16 +707,24 @@ function beginColoring(){
   if(!isUnlocked(idx)){ toast('Locked — finish the earlier mandalas first'); go('select'); return; }
   document.getElementById('colorTitle').textContent=curMandala.id;
   if(!state.progress[curMandala.id]) state.progress[curMandala.id]={};
+  undoStack=[];
+  colorChosen=false;
+  document.getElementById('sideTools').classList.remove('tools-open');
+  setTool('normal');
+  clearRaster();
+  if(curMandala.raster){
+    buildSwatches();
+    updateProgressButton();
+    go('color');
+    loadRaster(curMandala, ok=>{ if(ok){ renderRaster(); requestAnimationFrame(fitView); } });
+    return;
+  }
   // Drop any saved keys that don't match a region in the current design
   // (e.g. left over from a previous mandala layout) so progress stays accurate.
   const validIds=new Set(curMandala.geo.regions.map(r=>r.id));
   const prog=state.progress[curMandala.id]; let pruned=false;
   for(const k in prog){ if(!validIds.has(k)){ delete prog[k]; pruned=true; } }
   if(pruned) persist();
-  undoStack=[];
-  colorChosen=false;
-  document.getElementById('sideTools').classList.remove('tools-open');
-  setTool('normal');
   renderMandala();
   buildSwatches();
   updateProgressButton();
@@ -708,6 +745,81 @@ function renderMandala(){
   });
   svgEl.innerHTML=`<g id="zoomg">${inner}</g>`;
   gEl=document.getElementById('zoomg');
+}
+
+/* ---------- raster (B set): tap-to-fill via region-id maps ---------- */
+let rLabels=null, rW=0, rH=0, rComp=null, rCtx=null, rImgData=null, rUrl=null, rImgEl=null, rReady=false;
+let _pushPending=false, _pushAgain=false;
+function clearRaster(){ rLabels=null; rComp=null; rCtx=null; rImgData=null; rReady=false; rImgEl=null; if(rUrl){URL.revokeObjectURL(rUrl); rUrl=null;} }
+function hexRGB(c){ const n=parseInt(c.slice(1),16); return [(n>>16)&255,(n>>8)&255,n&255]; }
+function paintRegion(id,color,d){
+  const c = color? hexRGB(color) : [255,255,255];
+  for(let i=0,p=0;i<rLabels.length;i++,p+=4){ if(rLabels[i]===id){ d[p]=c[0]; d[p+1]=c[1]; d[p+2]=c[2]; d[p+3]=255; } }
+}
+function loadRaster(m, done){
+  rReady=false;
+  const img=new Image();
+  img.onload=()=>{
+    rW=img.naturalWidth; rH=img.naturalHeight;
+    const off=document.createElement('canvas'); off.width=rW; off.height=rH;
+    const octx=off.getContext('2d',{willReadFrequently:true}); octx.drawImage(img,0,0);
+    let data;
+    try{ data=octx.getImageData(0,0,rW,rH).data; }
+    catch(err){ toast('Coloring needs the published version'); done&&done(false); return; }
+    rLabels=new Int32Array(rW*rH);
+    for(let i=0,p=0;i<rLabels.length;i++,p+=4){ rLabels[i]=data[p]|(data[p+1]<<8)|(data[p+2]<<16); }
+    const prog=state.progress[m.id]||(state.progress[m.id]={});
+    let pruned=false;
+    for(const k in prog){ const id=+k; if(!(id>=2)||id>m.fillable+1){ delete prog[k]; pruned=true; } }
+    if(pruned) persist();
+    rComp=document.createElement('canvas'); rComp.width=rW; rComp.height=rH; rCtx=rComp.getContext('2d');
+    rImgData=rCtx.createImageData(rW,rH); const d=rImgData.data;
+    for(let i=0,p=0;i<rLabels.length;i++,p+=4){ const v=(rLabels[i]===0)?17:255; d[p]=v;d[p+1]=v;d[p+2]=v;d[p+3]=255; }
+    for(const k in prog){ paintRegion(+k, prog[k], d); }
+    rCtx.putImageData(rImgData,0,0);
+    rReady=true; done&&done(true);
+  };
+  img.onerror=()=>{ toast('Could not load mandala image'); done&&done(false); };
+  img.src=m.src;
+}
+function renderRaster(){
+  svgEl.setAttribute('viewBox', `0 0 ${rW} ${rH}`);
+  svgEl.innerHTML=`<g id="zoomg"><image id="rimg" x="0" y="0" width="${rW}" height="${rH}" href="${rComp.toDataURL('image/png')}" image-rendering="auto"/></g>`;
+  gEl=document.getElementById('zoomg'); rImgEl=document.getElementById('rimg');
+}
+function rasterPushImage(){
+  if(!rComp) return;
+  if(_pushPending){ _pushAgain=true; return; }
+  _pushPending=true;
+  rComp.toBlob(b=>{ _pushPending=false;
+    if(b){ const url=URL.createObjectURL(b); if(rImgEl) rImgEl.setAttribute('href',url); if(rUrl)URL.revokeObjectURL(rUrl); rUrl=url; }
+    if(_pushAgain){ _pushAgain=false; rasterPushImage(); }
+  },'image/png');
+}
+function rasterIdAtClient(cx,cy){
+  if(!rReady) return 0;
+  const u=svgUserAtClient(cx,cy); const x=Math.round(u.x), y=Math.round(u.y);
+  if(x<0||y<0||x>=rW||y>=rH) return 0;
+  return rLabels[y*rW+x];
+}
+function rasterFill(id){
+  if(id<2||!rReady) return;
+  const prog=state.progress[curMandala.id];
+  const prev=prog[id]||null;
+  const next=isEraser?null:(curColor||state.palette[0]);
+  if(prev===next) return;
+  undoStack.push({raster:true,id,prev});
+  if(next===null) delete prog[id]; else prog[id]=next;
+  paintRegion(id,next,rImgData.data); rCtx.putImageData(rImgData,0,0); rasterPushImage();
+  document.getElementById('undoBtn').disabled=false;
+  persist(); updateProgressButton(); sfxPop();
+}
+function rasterDropper(id){
+  if(id<2) return;
+  const c=state.progress[curMandala.id][id]||null;
+  if(c===null){ toast('That area is empty — nothing to pick'); }
+  else { state.palette[0]=c; curColor=c; isEraser=false; colorChosen=true; persist(); buildSwatches(); toast('Colour picked'); }
+  setTool('normal');
 }
 
 /* ---------- colour tray: paged swipe row (H or V) + pull-up full grid ---------- */
@@ -943,7 +1055,13 @@ function fillRegion(pathEl){
 function undo(){
   if(!undoStack.length) return;
   const entry=undoStack.pop();
-  const revert=o=>{ const el=svgEl.querySelector(`[data-id="${o.id}"]`); setRegionFill(o.id, el, o.prev); };
+  const revert=o=>{
+    if(o.raster){
+      const prog=state.progress[curMandala.id];
+      if(o.prev===null) delete prog[o.id]; else prog[o.id]=o.prev;
+      paintRegion(o.id,o.prev,rImgData.data); rCtx.putImageData(rImgData,0,0); rasterPushImage();
+    } else { const el=svgEl.querySelector(`[data-id="${o.id}"]`); setRegionFill(o.id, el, o.prev); }
+  };
   if(Array.isArray(entry)) entry.forEach(revert); else revert(entry);
   if(!undoStack.length) document.getElementById('undoBtn').disabled=true;
   persist(); updateProgressButton();
@@ -972,6 +1090,17 @@ function toggleToolPanel(){
 function brushStart(){ brushBatch=[]; lastPaintId=null; }
 function brushPaintAt(x,y){
   if(!brushBatch) return;
+  if(curMandala && curMandala.raster){
+    const id=rasterIdAtClient(x,y); if(id<2) return;
+    if(id===lastPaintId) return; lastPaintId=id;
+    const prog=state.progress[curMandala.id];
+    const prev=prog[id]||null, next=isEraser?null:(curColor||state.palette[0]);
+    if(prev===next) return;
+    brushBatch.push({raster:true,id,prev});
+    if(next===null) delete prog[id]; else prog[id]=next;
+    paintRegion(id,next,rImgData.data); rCtx.putImageData(rImgData,0,0); rasterPushImage(); sfxPop();
+    return;
+  }
   const t=document.elementFromPoint(x,y);
   if(!t || !t.classList || !t.classList.contains('region')) return;
   const id=t.dataset.id; if(id===lastPaintId) return; lastPaintId=id;
@@ -1005,6 +1134,14 @@ function confirmResetCanvas(){
 function resetCanvas(){
   const fills=state.progress[curMandala.id]; const ids=Object.keys(fills);
   if(!ids.length){ toast('Already at 0%'); return; }
+  if(curMandala.raster){
+    undoStack.push(ids.map(id=>({raster:true,id:+id,prev:fills[id]})));
+    ids.forEach(id=>{ paintRegion(+id,null,rImgData.data); });
+    rCtx.putImageData(rImgData,0,0); rasterPushImage();
+    state.progress[curMandala.id]={};
+    document.getElementById('undoBtn').disabled=false;
+    persist(); updateProgressButton(); toast('Reset to 0%'); return;
+  }
   undoStack.push(ids.map(id=>({id, prev:fills[id]})));
   ids.forEach(id=>{ const el=svgEl.querySelector(`[data-id="${id}"]`); if(el) el.setAttribute('fill','var(--canvas)'); });
   state.progress[curMandala.id]={};
@@ -1029,6 +1166,10 @@ const FILLABLE = {}; // all regions are fillable now -> progress uses real regio
 const RING_C = 2*Math.PI*18;
 function progressPct(){
   if(!curMandala) return 0;
+  if(curMandala.raster){
+    const prog=state.progress[curMandala.id]||{};
+    return curMandala.fillable ? Math.min(100, Math.round(Object.keys(prog).length/curMandala.fillable*100)) : 0;
+  }
   const valid=new Set(curMandala.geo.regions.filter(r=>!r.hub).map(r=>r.id));
   const total=valid.size;
   const prog=state.progress[curMandala.id]||{};
@@ -1071,6 +1212,14 @@ function nextLevel(){
 function finishSaveExit(){ closeFinishModal(); exitColoring(); }
 function exportPNG(){
   if(!curMandala) return;
+  if(curMandala.raster){
+    if(!rComp){ toast('Nothing to export yet'); return; }
+    try{ rComp.toBlob(b=>{ if(!b){toast('Could not export image');return;}
+      const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=`mandala-${curMandala.id}.png`;
+      document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),2000); toast('Image downloaded');
+    },'image/png'); }catch(err){ toast('Export not supported here'); }
+    return;
+  }
   const geo=curMandala.geo, V=geo.view, fills=state.progress[curMandala.id]||{};
   const px=1080, sw=(2*V)/px*1.7;
   let inner='';
@@ -1149,10 +1298,16 @@ wrap.addEventListener('pointerdown',e=>{ lastMove={x:e.clientX,y:e.clientY}; });
 function endPointer(e){
   const wasSingle = pointers.size===1;
   if(wasSingle && !moved && (Date.now()-downTime)<400){
-    const t=document.elementFromPoint(e.clientX,e.clientY);
-    if(t && t.classList && t.classList.contains('region')){
-      if(tool==='dropper') pickColorFrom(t);
-      else if(tool!=='brush') fillRegion(t);
+    if(curMandala && curMandala.raster){
+      const id=rasterIdAtClient(e.clientX,e.clientY);
+      if(tool==='dropper') rasterDropper(id);
+      else if(tool!=='brush') rasterFill(id);
+    } else {
+      const t=document.elementFromPoint(e.clientX,e.clientY);
+      if(t && t.classList && t.classList.contains('region')){
+        if(tool==='dropper') pickColorFrom(t);
+        else if(tool!=='brush') fillRegion(t);
+      }
     }
   }
   if(tool==='brush' && wasSingle) brushEnd();
