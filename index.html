@@ -332,7 +332,7 @@
         <button class="btn btn-outline" onclick="openSettings('home')">SETTINGS</button>
       </div>
     </div>
-    <div class="version" id="ver">v1.16.0</div>
+    <div class="version" id="ver">v1.16.1</div>
   </section>
 
   <!-- ================= TUTORIAL ================= -->
@@ -744,7 +744,7 @@ function applyCheat(){
   } else if(code==='DISCO'){
     state.cheats.disco=!state.cheats.disco; persist(); updateFx();
     toast(state.cheats.disco?'Cheat ON — disco time':'Cheat OFF — lights up');
-  } else if(code==='SHOWMEITJEFF'){
+  } else if(code==='GIVEITTOMEJEFFY'){
     state.cheats.showList=!state.cheats.showList; persist(); renderCheatList();
     toast(state.cheats.showList?'Cheat list shown':'Cheat list hidden');
   } else if(code==='OFFMAN'){
@@ -817,7 +817,7 @@ const CHEAT_LIST=[
   ['EARTHQUAKE','Screen shakes on tap'],
   ['DISCO','Colour-cycling background'],
   ['OFFMAN','Turn all cheats off'],
-  ['SHOWMEITJEFF','Show / hide this list'],
+  ['GIVEITTOMEJEFFY','Show / hide this list'],
 ];
 function renderCheatList(){
   const el=document.getElementById('cheatList'); if(!el) return;
@@ -845,8 +845,8 @@ function setFloatVars(p){
   p.style.setProperty('--dx',((10+Math.random()*24)*s()).toFixed(1)+'px');
   p.style.setProperty('--dy',((10+Math.random()*24)*s()).toFixed(1)+'px');
   p.style.setProperty('--dr',((2+Math.random()*5)*s()).toFixed(1)+'deg');
-  p.style.setProperty('--dur',(6.5+Math.random()*4.5).toFixed(2)+'s');
-  p.style.setProperty('--delay',(-Math.random()*8).toFixed(2)+'s');
+  p.style.setProperty('--dur',(16+Math.random()*10).toFixed(2)+'s');
+  p.style.setProperty('--delay',(-Math.random()*16).toFixed(2)+'s');
 }
 function clearFloatVars(p){ ['--dx','--dy','--dr','--dur','--delay'].forEach(v=>p.style.removeProperty(v)); }
 function syncZeroG(){
