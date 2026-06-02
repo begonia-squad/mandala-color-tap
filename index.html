@@ -84,17 +84,19 @@
   .btn-begin svg{width:18px; height:18px;}
 
   /* ---------- HOME ---------- */
-  #screen-home{align-items:center; justify-content:flex-start; padding:0;
+  #screen-home{align-items:center; justify-content:flex-start; padding:0; overflow-y:auto; -webkit-overflow-scrolling:touch;
     background:
       radial-gradient(120% 80% at 50% 120%, var(--accent-soft) 0%, rgba(0,0,0,0) 60%),
       var(--bg);}
   .home-art{position:absolute; top:-44px; left:-64px; width:64%; max-width:340px; pointer-events:none; opacity:.98; animation:floaty 4.2s ease-in-out infinite; transform-origin:40% 40%;}
   @keyframes floaty{0%,100%{transform:translateY(0) rotate(0deg);} 50%{transform:translateY(10px) rotate(2deg);}}
-  .home-mid{flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; width:100%; padding:0 28px;}
-  .home-title{font-family:"Nunito",-apple-system,sans-serif; font-size:13vw; line-height:.95; font-weight:800; text-align:center; letter-spacing:-.5px; margin-top:32vh;}
+  .home-mid{flex:1 0 auto; display:flex; flex-direction:column; align-items:center; width:100%; padding:0 28px;}
+  .home-title{font-family:"Nunito",-apple-system,sans-serif; font-size:clamp(30px,13vw,56px); line-height:.95; font-weight:800; text-align:center; letter-spacing:-.5px; margin-top:auto;}
   @media(min-width:480px){ .home-title{font-size:56px;} }
-  .home-sub{color:var(--accent); font-weight:800; margin-top:16px; font-size:15px; letter-spacing:.4px;}
+  .home-sub{color:var(--accent); font-weight:800; margin-top:16px; margin-bottom:clamp(30px,7vh,90px); font-size:15px; letter-spacing:.4px; text-align:center;}
   .home-btns{width:100%; max-width:380px; display:flex; flex-direction:column; gap:14px; margin-top:auto; margin-bottom:26px; padding:0 4px;}
+  /* short screens: tighten so the title never crowds the buttons */
+  @media(max-height:680px){ .home-title{font-size:clamp(26px,10.5vw,46px);} .home-sub{margin-top:10px; margin-bottom:clamp(20px,4vh,44px);} }
   .home-btns .btn{padding:19px; font-size:18px; text-align:center; opacity:0; animation:riseIn .5s cubic-bezier(.2,.7,.3,1) forwards;}
   .home-btns .btn:nth-child(1){animation-delay:.10s;}
   .home-btns .btn:nth-child(2){animation-delay:.20s;}
@@ -131,7 +133,9 @@
   .cheat-row input{flex:1; min-width:0; padding:13px 14px; font-size:16px; font-weight:700; letter-spacing:1px; text-transform:uppercase; border:2px solid color-mix(in srgb, var(--text) 22%, transparent); border-radius:12px; background:var(--panel); color:var(--text); outline:none;}
   .cheat-row input::placeholder{color:var(--muted); font-weight:600; letter-spacing:.5px; text-transform:none;}
   .cheat-row input:focus{border-color:var(--accent);}
-  .cheat-row .cheat-go{flex:0 0 auto; min-width:96px; padding-left:18px; padding-right:18px;}
+  .cheat-row .cheat-go{flex:0 0 auto; min-width:96px; padding-left:18px; padding-right:18px; background:#10131a; color:#fff; box-shadow:var(--card-shadow);}
+  .cheat-row .cheat-go:active{filter:brightness(1.25);}
+  body.dark .cheat-row .cheat-go{background:#f2f6fc; color:#10131a;}
   .cheat-status{margin-top:12px; font-size:14px; font-weight:700; color:var(--accent); min-height:18px;}
 
   /* ---------- PALETTE ---------- */
@@ -158,6 +162,20 @@
   .mthumb .badge.check svg{width:13px; height:13px;}
   .mthumb.sel:not(.done) .badge.dot{display:flex;}
   .mthumb.done .badge.check{display:flex;}
+  /* completed mandalas: black tile with a white check + white 100% */
+  .mthumb.done{background:#0c0e12; border-color:#0c0e12;}
+  .mthumb.done .badge.check{background:transparent; color:#fff; box-shadow:none;}
+  .mthumb.done .badge.check svg{width:16px; height:16px; stroke-width:3.4;}
+  /* progress label (bottom-right) for any mandala with >0% done */
+  .mthumb .pctbadge{position:absolute; right:7px; bottom:7px; font-family:"Nunito",sans-serif; font-weight:800; font-size:11px; letter-spacing:.2px; line-height:1; padding:3px 6px; border-radius:8px; color:#fff; background:var(--accent); box-shadow:0 1px 5px rgba(0,0,0,.25);}
+  .mthumb.done .pctbadge{color:#fff; background:transparent; box-shadow:none;}
+  /* dark mode: flip the completed tile to white (with dark art, check & 100% so they stay visible) */
+  body.dark .mthumb.done{background:#f4f7fc; border-color:#f4f7fc; --line:#2b3340; --canvas:#f4f7fc;}
+  body.dark .mthumb.done .badge.check{color:#10131a;}
+  body.dark .mthumb.done .pctbadge{color:#10131a;}
+  /* a completed mandala that's also selected still shows the blue accent outline */
+  .mthumb.done.sel{border-color:var(--accent); box-shadow:0 8px 20px -8px color-mix(in srgb, var(--accent) 60%, transparent);}
+  body.dark .mthumb.done.sel{border-color:var(--accent);}
   .mthumb.locked > svg{opacity:.18;}
   .lockbadge{position:absolute; inset:0; display:grid; place-items:center; pointer-events:none;}
   .lockbadge svg{width:30%; height:30%; color:var(--muted);}
@@ -196,6 +214,19 @@
   @media (prefers-reduced-motion: reduce){ #canvasWrap.trace-on .trace .glow,#canvasWrap.trace-on .trace .core{animation-duration:9s;} }
   #mandalaSvg{width:100%; height:100%; display:block;}
   #mandalaSvg path.region{cursor:pointer;}
+  /* ---------- cheat FX ---------- */
+  @keyframes cfQuake{0%,100%{transform:translate(0,0)}15%{transform:translate(-6px,4px)}30%{transform:translate(6px,-5px)}45%{transform:translate(-5px,-4px)}60%{transform:translate(5px,5px)}75%{transform:translate(-4px,3px)}90%{transform:translate(3px,-3px)}}
+  #canvasWrap.fx-quake{animation:cfQuake .42s ease;}
+  @keyframes cfDisco{0%{background-color:#ffdce8}16%{background-color:#dcecff}33%{background-color:#dcffe6}50%{background-color:#fff4cf}66%{background-color:#efdcff}83%{background-color:#ffe6cf}100%{background-color:#ffdce8}}
+  #canvasWrap.fx-disco{animation:cfDisco 6s linear infinite;}
+  @keyframes cfDiscoDark{0%{background-color:#3a1f2b}16%{background-color:#1f2c3a}33%{background-color:#1f3a28}50%{background-color:#3a361f}66%{background-color:#2c1f3a}83%{background-color:#3a291f}100%{background-color:#3a1f2b}}
+  body.dark #canvasWrap.fx-disco{animation:cfDiscoDark 6s linear infinite;}
+  #zoomg.fx-melt{filter:url(#meltFx);}
+  @keyframes cfBounce{0%{transform:scale(1)}30%{transform:scale(1.22)}62%{transform:scale(.93)}100%{transform:scale(1)}}
+  #mandalaSvg path.region.cf-float{transform-box:fill-box; transform-origin:center; animation:cfFloat var(--dur,6s) ease-in-out infinite; animation-delay:var(--delay,0s);}
+  @keyframes cfFloat{0%{transform:translate(0,0) rotate(0deg)}25%{transform:translate(var(--dx,8px),var(--dy,-8px)) rotate(var(--dr,4deg))}50%{transform:translate(calc(var(--dx,8px)*-0.7),calc(var(--dy,-8px)*0.9)) rotate(calc(var(--dr,4deg)*-1))}75%{transform:translate(calc(var(--dx,8px)*0.6),calc(var(--dy,-8px)*-0.8)) rotate(var(--dr,4deg))}100%{transform:translate(0,0) rotate(0deg)}}
+  #zoomg.cf-snap path.region.cf-float{animation:none !important; transform:none !important; transition:transform .42s cubic-bezier(.2,.8,.3,1);}
+  #mandalaSvg path.region.cf-bounce{transform-box:fill-box; transform-origin:center; animation:cfBounce .42s ease;}
   .sidetools{position:absolute; right:14px; bottom:6px; display:flex; flex-direction:column; gap:12px;}
   .tool{width:42px;height:42px;border-radius:50%;background:var(--panel);display:grid;place-items:center;border:none;cursor:pointer;color:var(--text); box-shadow:var(--card-shadow); transition:transform .08s, background .15s;}
   .tool:active{transform:scale(.90); background:var(--panel2);}
@@ -263,6 +294,8 @@
   .tut-demo{margin:6px auto 30px; width:200px; height:200px;}
 
   .toast{position:absolute; left:50%; bottom:96px; transform:translateX(-50%) translateY(20px); background:var(--btn-dark); color:#fff; padding:11px 20px; border-radius:99px; font-size:14px; font-weight:700; opacity:0; pointer-events:none; transition:.25s; z-index:50;}
+  #confettiCanvas{position:absolute; inset:0; width:100%; height:100%; pointer-events:none; z-index:300; display:none;}
+  #confettiCanvas.on{display:block;}
   .toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
   /* ---------- completion modal ---------- */
   .modal-overlay{position:absolute; inset:0; background:rgba(0,0,0,.5); display:none; align-items:center; justify-content:center; z-index:60; padding:24px; animation:fade .2s ease;}
@@ -292,7 +325,7 @@
         <button class="btn btn-outline" onclick="openSettings('home')">SETTINGS</button>
       </div>
     </div>
-    <div class="version" id="ver">v1.14.8</div>
+    <div class="version" id="ver">v1.15.6</div>
   </section>
 
   <!-- ================= TUTORIAL ================= -->
@@ -307,12 +340,13 @@
     </div>
     <div class="content">
       <svg class="tut-demo" id="tutDemo" viewBox="0 0 100 100"></svg>
-      <div class="tut-step"><div class="tut-num">1</div><div><h3>Pick a mandala</h3><p>Tap START, choose any design from the gallery, then press BEGIN.</p></div></div>
-      <div class="tut-step"><div class="tut-num">2</div><div><h3>Choose a color</h3><p>Select one of the five colors in the bar at the bottom of the coloring screen.</p></div></div>
-      <div class="tut-step"><div class="tut-num">3</div><div><h3>Tap to fill</h3><p>Tap any shape to flood it with your color. Tap again with a new color to change it.</p></div></div>
-      <div class="tut-step"><div class="tut-num">4</div><div><h3>Zoom &amp; pan</h3><p>Pinch to zoom into the fine center detail, drag to move around, and tap the frame button to fit the whole mandala again.</p></div></div>
-      <div class="tut-step"><div class="tut-num">5</div><div><h3>Erase &amp; undo</h3><p>The white swatch with the red ring erases a shape. The curved arrow undoes your last fill.</p></div></div>
-      <div class="tut-step"><div class="tut-num">6</div><div><h3>Save your art</h3><p>Your work saves automatically on this device. Tap the check mark to mark a mandala complete. No internet needed — ever.</p></div></div>
+      <div class="tut-step"><div class="tut-num">1</div><div><h3>Pick a mandala</h3><p>Tap START, choose a design from the gallery, then press BEGIN. New designs unlock as you finish the ones before them.</p></div></div>
+      <div class="tut-step"><div class="tut-num">2</div><div><h3>Tap to color</h3><p>Tap any shape to fill it with your selected color. Tap it again with a different color to change it.</p></div></div>
+      <div class="tut-step"><div class="tut-num">3</div><div><h3>The color bar</h3><p>Along the bottom is your five-color palette plus the eraser (white swatch with the red ring). Swipe the bar to browse every available color — it loops around — and tap the &#8646; button to switch the bar between horizontal and vertical.</p></div></div>
+      <div class="tut-step"><div class="tut-num">4</div><div><h3>Make your palette</h3><p>Pull the bar up to open the palette editor: tap a slot, then choose any swatch from All Colors to drop it in. Close it and your new palette is ready in the bar. (You can also edit it from COLOR PALETTE on the menu.)</p></div></div>
+      <div class="tut-step"><div class="tut-num">5</div><div><h3>Handy tools</h3><p>Tap the gear on the right for extra tools: a brush to fill by dragging across shapes, an eyedropper to grab a color straight from your artwork, and a reset to start the mandala over.</p></div></div>
+      <div class="tut-step"><div class="tut-num">6</div><div><h3>Zoom, pan &amp; undo</h3><p>Pinch to zoom into the fine center detail and drag to move around. Tap the frame button to fit the whole mandala again, and the curved arrow to undo your last fill.</p></div></div>
+      <div class="tut-step"><div class="tut-num">7</div><div><h3>Save &amp; personalize</h3><p>Your work saves automatically on this device — tap the check mark to mark a mandala complete. In Settings you can switch between Light and Dark themes and set the music and sound volume. It all works fully offline, no internet ever.</p></div></div>
     </div>
     <div class="footer" style="justify-content:center">
       <button class="btn btn-accent btn-save" style="width:100%;max-width:360px" onclick="go('select')">GOT IT — START COLORING</button>
@@ -324,9 +358,9 @@
     <div class="sheethead">
       <div class="grabber"></div>
       <div class="topbar">
-        <div style="width:42px"></div>
-        <div class="title serif">Settings</div>
         <button class="iconbtn" onclick="closeSettings()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+        <div class="title serif">Settings</div>
+        <div style="width:42px"></div>
       </div>
     </div>
     <div class="content">
@@ -341,7 +375,7 @@
       <div class="section-label" style="margin-top:30px">Cheats</div>
       <div class="cheat-row">
         <input type="text" id="cheatInput" placeholder="Enter code" autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false">
-        <button class="btn btn-accent cheat-go" onclick="applyCheat()">ENTER</button>
+        <button class="btn cheat-go" onclick="applyCheat()">ENTER</button>
       </div>
       <div class="cheat-status" id="cheatStatus"></div>
     </div>
@@ -435,6 +469,7 @@
   </section>
 
   <div class="toast" id="toast"></div>
+  <canvas id="confettiCanvas" aria-hidden="true"></canvas>
 
   <div class="modal-overlay" id="confirmModal" onclick="if(event.target===this)closeConfirm()">
     <div class="modal">
@@ -607,7 +642,7 @@ const defaultState = {
   selected:'A1',
   progress:{},   // { A1:{regionId:color,...} }
   done:{},       // { A1:true }
-  cheats:{ unlockAll:false, gradient:false, trace:false }   // unlocked via codes on the Settings screen
+  cheats:{ unlockAll:false, gradient:false, trace:false, party:false, itsjeff:false, zerog:false, bounce:false, melt:false, quake:false, disco:false }   // unlocked via codes on the Settings screen
 };
 let state = load();
 function load(){
@@ -655,8 +690,11 @@ function applyCheat(){
   const inp=document.getElementById('cheatInput');
   const code=(inp.value||'').trim().toUpperCase();
   if(!code) return;
-  if(!state.cheats) state.cheats={unlockAll:false, gradient:false, trace:false};
+  if(!state.cheats) state.cheats={unlockAll:false, gradient:false, trace:false, party:false, itsjeff:false};
   if(state.cheats.trace===undefined) state.cheats.trace=false;
+  if(state.cheats.party===undefined) state.cheats.party=false;
+  if(state.cheats.itsjeff===undefined) state.cheats.itsjeff=false;
+  ['zerog','bounce','melt','quake','disco'].forEach(k=>{ if(state.cheats[k]===undefined) state.cheats[k]=false; });
   if(code==='ALLSUPJI100'){
     state.cheats.unlockAll=!state.cheats.unlockAll;
     persist(); toast(state.cheats.unlockAll?'Cheat ON — all levels unlocked':'Cheat OFF — level locks restored');
@@ -671,6 +709,32 @@ function applyCheat(){
     state.cheats.trace=!state.cheats.trace;
     persist(); updateTrace();
     toast(state.cheats.trace?'Cheat ON — travelling line':'Cheat OFF — line trace off');
+  } else if(code==='PARTYMAN'){
+    state.cheats.party=!state.cheats.party;
+    persist();
+    if(state.cheats.party) celebrate();   // little teaser burst when you switch it on
+    toast(state.cheats.party?'Cheat ON — confetti party':'Cheat OFF — confetti off');
+  } else if(code==='ITSJEFF'){
+    state.cheats.itsjeff=!state.cheats.itsjeff;
+    persist();
+    stopMusicNode(); startMusicIfNeeded();   // swap the track immediately
+    toast(state.cheats.itsjeff?"Cheat ON — it's Jeff, on repeat":'Cheat OFF — normal music');
+  } else if(code==='ZEROG'){
+    state.cheats.zerog=!state.cheats.zerog; persist(); updateFx();
+    toast(state.cheats.zerog?'Cheat ON — zero gravity':'Cheat OFF — gravity restored');
+  } else if(code==='BOUNCEHOUSE'){
+    state.cheats.bounce=!state.cheats.bounce; persist();
+    toast(state.cheats.bounce?'Cheat ON — boing!':'Cheat OFF — no more bounce');
+  } else if(code==='MELTMAN'){
+    state.cheats.melt=!state.cheats.melt; persist(); updateFx();
+    toast(state.cheats.melt?'Cheat ON — meltdown':'Cheat OFF — solid again');
+  } else if(code==='EARTHQUAKE'){
+    state.cheats.quake=!state.cheats.quake; persist();
+    if(state.cheats.quake) fxQuake();
+    toast(state.cheats.quake?'Cheat ON — shaky taps':'Cheat OFF — steady now');
+  } else if(code==='DISCO'){
+    state.cheats.disco=!state.cheats.disco; persist(); updateFx();
+    toast(state.cheats.disco?'Cheat ON — disco time':'Cheat OFF — lights up');
   } else if(code==='RESETMAN'){
     inp.value='';
     openConfirm('Reset everything?', 'Wipes all colouring and progress and relocks every level except A1, A2, A3 and B1. This cannot be undone.', doResetMan);
@@ -709,6 +773,13 @@ function renderCheatStatus(){
   if(c.unlockAll) on.push('All levels unlocked');
   if(c.gradient) on.push('Gradient colouring');
   if(c.trace) on.push('Travelling line');
+  if(c.party) on.push('Confetti');
+  if(c.itsjeff) on.push("It's Jeff (looped)");
+  if(c.zerog) on.push('Zero gravity');
+  if(c.bounce) on.push('Bounce');
+  if(c.melt) on.push('Melt');
+  if(c.quake) on.push('Earthquake');
+  if(c.disco) on.push('Disco');
   el.textContent = on.length ? ('Active: '+on.join(' · ')) : '';
 }
 // run the border trace only while colouring and only when the cheat is on
@@ -716,6 +787,55 @@ function updateTrace(){
   const wrap=document.getElementById('canvasWrap'); if(!wrap) return;
   const onColor=document.getElementById('screen-color').classList.contains('active');
   wrap.classList.toggle('trace-on', !!(state.cheats && state.cheats.trace) && onColor);
+}
+/* ---------- cheat FX (ZEROG / BOUNCEHOUSE / MELTMAN / EARTHQUAKE / DISCO) ---------- */
+let _qkTimer=null, _zgTimer=null;
+function updateFx(){
+  const wrap=document.getElementById('canvasWrap'), z=document.getElementById('zoomg'), c=state.cheats||{};
+  if(wrap) wrap.classList.toggle('fx-disco', !!c.disco);
+  if(z) z.classList.toggle('fx-melt', !!c.melt);
+  syncZeroG();
+}
+function setFloatVars(p){
+  const s=()=>Math.random()<.5?-1:1;
+  p.style.setProperty('--dx',((18+Math.random()*44)*s()).toFixed(1)+'px');
+  p.style.setProperty('--dy',((18+Math.random()*44)*s()).toFixed(1)+'px');
+  p.style.setProperty('--dr',((3+Math.random()*9)*s()).toFixed(1)+'deg');
+  p.style.setProperty('--dur',(4+Math.random()*4).toFixed(2)+'s');
+  p.style.setProperty('--delay',(-Math.random()*6).toFixed(2)+'s');
+}
+function clearFloatVars(p){ ['--dx','--dy','--dr','--dur','--delay'].forEach(v=>p.style.removeProperty(v)); }
+function syncZeroG(){
+  if(!svgEl || !curMandala) return;
+  const on=!!(state.cheats && state.cheats.zerog), prog=state.progress[curMandala.id]||{};
+  svgEl.querySelectorAll('path.region').forEach(p=>{
+    const filled=!!prog[p.dataset.id];
+    if(on && filled){ if(!p.classList.contains('cf-float')) setFloatVars(p); p.classList.add('cf-float'); }
+    else { p.classList.remove('cf-float'); clearFloatVars(p); }
+  });
+}
+function zeroGSnap(){
+  const z=document.getElementById('zoomg'); if(!z) return;
+  z.classList.add('cf-snap'); clearTimeout(_zgTimer); _zgTimer=setTimeout(()=>z.classList.remove('cf-snap'),820);
+}
+function fxQuake(){
+  const w=document.getElementById('canvasWrap'); if(!w) return;
+  w.classList.remove('fx-quake'); w.getBoundingClientRect(); w.classList.add('fx-quake');
+  clearTimeout(_qkTimer); _qkTimer=setTimeout(()=>w.classList.remove('fx-quake'),430);
+}
+function fxBounce(p){
+  p.classList.remove('cf-bounce'); p.getBoundingClientRect(); p.classList.add('cf-bounce');
+  setTimeout(()=>p.classList.remove('cf-bounce'),460);
+}
+function fxOnFill(pathEl, next){
+  const c=state.cheats||{};
+  if(next!=null){
+    if(c.bounce) fxBounce(pathEl);
+    if(c.zerog){ setFloatVars(pathEl); pathEl.classList.add('cf-float'); }
+  } else {
+    pathEl.classList.remove('cf-float'); clearFloatVars(pathEl);
+  }
+  if(c.quake) fxQuake();
 }
 function updateSliderOff(el){
   const off = +el.value===0;
@@ -806,9 +926,11 @@ function renderGallery(){
     const art = m.raster
       ? `<img class="rthumb" src="${m.thumb}" alt="${m.id}" draggable="false">`
       : mandalaSVGString(m.geo, locked?null:state.progress[m.id], {sw:1.4});
+    const pct = locked ? 0 : pctFor(m);
     thumb.innerHTML=art
       +'<div class="badge dot"></div>'
       +'<div class="badge check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg></div>'
+      +(pct>0?`<div class="pctbadge">${pct}%</div>`:'')
       +(locked?`<div class="lockbadge">${LOCK_SVG}</div>`:'');
     const cap=document.createElement('div'); cap.className='cap'+(state.selected===m.id?' sel':'')+(state.done[m.id]?' done':''); cap.textContent=m.id;
     card.appendChild(thumb); card.appendChild(cap);
@@ -863,7 +985,8 @@ function renderMandala(){
   // collect gradient colours present so we can predefine their defs
   const gset=new Set();
   geo.regions.forEach(r=>{ const v=fills[r.id]; if(v){ const f=parseFill(v); if(f.grad) gset.add(f.hex); } });
-  let defs=''; gset.forEach(h=>{ const [lt,dk]=gradStops(h); defs+=`<linearGradient id="cvg_${h.slice(1)}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${lt}"/><stop offset="1" stop-color="${dk}"/></linearGradient>`; });
+  let defs='<filter id="meltFx" x="-25%" y="-25%" width="150%" height="160%"><feTurbulence type="fractalNoise" baseFrequency="0.01 0.028" numOctaves="2" seed="7" result="n"><animate attributeName="baseFrequency" dur="16s" values="0.01 0.028;0.014 0.044;0.01 0.028" repeatCount="indefinite"/></feTurbulence><feDisplacementMap in="SourceGraphic" in2="n" scale="22" xChannelSelector="R" yChannelSelector="G"/></filter>';
+  gset.forEach(h=>{ const [lt,dk]=gradStops(h); defs+=`<linearGradient id="cvg_${h.slice(1)}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${lt}"/><stop offset="1" stop-color="${dk}"/></linearGradient>`; });
   let inner='';
   geo.regions.forEach(r=>{
     let fill='var(--canvas)';
@@ -877,6 +1000,7 @@ function renderMandala(){
   }
   svgEl.innerHTML=`<defs id="gdefs">${defs}</defs><g id="zoomg">${inner}</g>`;
   gEl=document.getElementById('zoomg');
+  updateFx();
 }
 
 /* ---------- raster (B set): tap-to-fill via region-id maps ---------- */
@@ -1247,6 +1371,8 @@ function fillRegion(pathEl){
   setRegionFill(id, pathEl, next);
   document.getElementById('undoBtn').disabled=false;
   persist(); updateProgressButton(); sfxPop();
+  if(next!=null && state.cheats && state.cheats.party){ const r=pathEl.getBoundingClientRect(); confettiBurst(r.left+r.width/2, r.top+r.height/2, 9, 0.7); }
+  fxOnFill(pathEl, next);
 }
 function undo(){
   if(!undoStack.length) return;
@@ -1373,6 +1499,15 @@ function progressPct(){
   let filled=0; for(const id in prog){ if(valid.has(id)) filled++; }
   return total ? Math.min(100, Math.round(filled/total*100)) : 0;
 }
+// progress % for ANY mandala (used by the gallery thumbnails)
+function pctFor(m){
+  if(!m) return 0;
+  const prog=state.progress[m.id]||{};
+  if(m.raster){ return m.fillable ? Math.min(100, Math.round(Object.keys(prog).length/m.fillable*100)) : 0; }
+  const valid=new Set(m.geo.regions.filter(r=>!r.hub).map(r=>r.id));
+  let filled=0; for(const id in prog){ if(valid.has(id)) filled++; }
+  return valid.size ? Math.min(100, Math.round(filled/valid.size*100)) : 0;
+}
 function updateProgressButton(){
   const btn=document.getElementById('progBtn'); if(!btn||!curMandala) return;
   const pct=progressPct(), complete=pct>=100;
@@ -1380,7 +1515,7 @@ function updateProgressButton(){
   const bar=btn.querySelector('.bar'), txt=btn.querySelector('.prog-text');
   if(bar){ bar.style.strokeDasharray=RING_C; bar.style.strokeDashoffset=RING_C*(1-pct/100); }
   if(txt) txt.textContent=pct+'%';
-  if(complete && !state.done[curMandala.id]){ state.done[curMandala.id]=true; persist(); }
+  if(complete && !state.done[curMandala.id]){ state.done[curMandala.id]=true; persist(); if(state.cheats && state.cheats.party) celebrate(); }
 }
 function onProgressTap(){
   if(!curMandala) return;
@@ -1469,6 +1604,7 @@ wrap.addEventListener('pointerdown',e=>{
   pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
   if(pointers.size===1){
     startPt={x:e.clientX,y:e.clientY}; moved=false; downTime=Date.now();
+    if(state.cheats && state.cheats.zerog) zeroGSnap();
     if(tool==='brush'){ brushStart(); brushPaintAt(e.clientX,e.clientY); }
   }
   if(pointers.size===2){ brushEnd(); const p=[...pointers.values()]; pinchStart={dist:dist(p[0],p[1]), scale, tx, ty, mid:mid(p[0],p[1])}; }
@@ -1599,6 +1735,11 @@ function playSource(buf, loop, isIntro){
 function startMusicNode(){
   if(!actx || musicNode || !musicWantsPlay) return;
   if(actx.state!=='running'){ try{ actx.resume(); }catch(_){} return; }  // iOS: only start once truly running
+  if(state.cheats && state.cheats.itsjeff){          // ITSJEFF cheat: loop the Jeff song forever
+    if(introBuf){ playSource(introBuf, true, false); }
+    else if(!introSettled){ loadIntro(); }
+    return;
+  }
   if(!introDone){                                  // play the intro once, first
     if(introBuf){ introDone=true; playSource(introBuf, false, true); return; }
     if(introSettled){ introDone=true; }            // intro failed to load -> skip straight to the loop
@@ -1643,6 +1784,51 @@ function updateMusicVol(){ initAudio(); applyMusicVol(); startMusicIfNeeded(); }
 /* ---------- 14. Toast + boot ---------- */
 let toastTimer=null;
 function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'),1700); }
+
+/* ---------- Confetti (PARTYMAN) ---------- */
+let _cfCv=null, _cfCtx=null, _cfParts=[], _cfRAF=null;
+const _cfColors=['#ff4d6d','#ffd166','#06d6a0','#4f77f2','#a32fe2','#ff8c42','#2ec4b6','#ef476f','#3ddc97'];
+function _cfSetup(){
+  if(!_cfCv){ _cfCv=document.getElementById('confettiCanvas'); if(_cfCv) _cfCtx=_cfCv.getContext('2d'); }
+  if(!_cfCv) return false;
+  const dpr=Math.min(2, window.devicePixelRatio||1);
+  _cfCv.width=Math.round(_cfCv.clientWidth*dpr); _cfCv.height=Math.round(_cfCv.clientHeight*dpr);
+  _cfCtx.setTransform(dpr,0,0,dpr,0,0);
+  return true;
+}
+function confettiBurst(x,y,count,power){
+  if(!_cfSetup()) return;
+  _cfCv.classList.add('on'); power=power||1;
+  for(let i=0;i<count;i++){
+    const a=Math.random()*Math.PI*2, sp=(2+Math.random()*6)*power;
+    _cfParts.push({ x:x, y:y, vx:Math.cos(a)*sp, vy:Math.sin(a)*sp-(2+Math.random()*3)*power,
+      g:0.12+Math.random()*0.06, rot:Math.random()*6.28, vr:(Math.random()-.5)*0.45,
+      size:5+Math.random()*7, color:_cfColors[(Math.random()*_cfColors.length)|0],
+      life:0, max:55+Math.random()*45, shape:Math.random()<0.5?'rect':'circle' });
+  }
+  if(!_cfRAF) _cfTick();
+}
+function _cfTick(){
+  const ctx=_cfCtx, cv=_cfCv; if(!ctx) return;
+  ctx.clearRect(0,0,cv.width,cv.height);
+  _cfParts=_cfParts.filter(p=>p.life<p.max && p.y<cv.clientHeight+50);
+  for(const p of _cfParts){
+    p.life++; p.vy+=p.g; p.vx*=0.99; p.x+=p.vx; p.y+=p.vy; p.rot+=p.vr;
+    ctx.save(); ctx.globalAlpha=Math.max(0,1-p.life/p.max); ctx.translate(p.x,p.y); ctx.rotate(p.rot); ctx.fillStyle=p.color;
+    if(p.shape==='rect') ctx.fillRect(-p.size/2,-p.size/2,p.size,p.size*0.62);
+    else { ctx.beginPath(); ctx.arc(0,0,p.size/2,0,6.2832); ctx.fill(); }
+    ctx.restore();
+  }
+  if(_cfParts.length){ _cfRAF=requestAnimationFrame(_cfTick); }
+  else { _cfRAF=null; ctx.clearRect(0,0,cv.width,cv.height); cv.classList.remove('on'); }
+}
+function celebrate(){
+  const W=window.innerWidth, H=window.innerHeight;
+  confettiBurst(W*0.5, H*0.42, 90, 1.6);
+  setTimeout(()=>confettiBurst(W*0.22, H*0.36, 55, 1.4), 120);
+  setTimeout(()=>confettiBurst(W*0.78, H*0.36, 55, 1.4), 240);
+  sfxPop();
+}
 
 // Start audio on the first interaction (browser/iOS autoplay policy). iOS needs resume() inside a
 // gesture; we keep listening until the context is genuinely 'running', then start + stop listening.
