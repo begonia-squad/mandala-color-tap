@@ -228,11 +228,12 @@
   #canvasWrap.fx-disco{animation:cfDisco 6s linear infinite;}
   @keyframes cfDiscoDark{0%{background-color:#3a1f2b}16%{background-color:#1f2c3a}33%{background-color:#1f3a28}50%{background-color:#3a361f}66%{background-color:#2c1f3a}83%{background-color:#3a291f}100%{background-color:#3a1f2b}}
   body.dark #canvasWrap.fx-disco{animation:cfDiscoDark 6s linear infinite;}
-  #zoomg.fx-melt{filter:url(#meltFx);}
-  @keyframes cfBounce{0%{transform:scale(1)}18%{transform:scale(1.34)}38%{transform:scale(.82)}56%{transform:scale(1.16)}72%{transform:scale(.93)}86%{transform:scale(1.04)}100%{transform:scale(1)}}
-  #mandalaSvg path.region.cf-float{transform-box:fill-box; transform-origin:center; animation:cfFloat var(--dur,6s) ease-in-out infinite; animation-delay:var(--delay,0s);}
-  @keyframes cfFloat{0%{transform:translate(0,0) rotate(0deg)}25%{transform:translate(var(--dx,8px),var(--dy,-8px)) rotate(var(--dr,4deg))}50%{transform:translate(calc(var(--dx,8px)*-0.7),calc(var(--dy,-8px)*0.9)) rotate(calc(var(--dr,4deg)*-1))}75%{transform:translate(calc(var(--dx,8px)*0.6),calc(var(--dy,-8px)*-0.8)) rotate(var(--dr,4deg))}100%{transform:translate(0,0) rotate(0deg)}}
-  #mandalaSvg path.region.cf-bounce{transform-box:fill-box; transform-origin:center; animation:cfBounce .62s cubic-bezier(.28,1.5,.5,1);}
+  @keyframes cfBounce{0%{transform:scale(1)}16%{transform:scale(1.46)}33%{transform:scale(.72)}48%{transform:scale(1.24)}62%{transform:scale(.86)}76%{transform:scale(1.1)}88%{transform:scale(.96)}100%{transform:scale(1)}}
+  #mandalaSvg path.region.cf-float{transform-box:fill-box; transform-origin:center; animation:cfFloat var(--dur,8s) ease-in-out infinite; animation-delay:var(--delay,0s);}
+  @keyframes cfFloat{0%{transform:translate(0,0) rotate(0deg)}25%{transform:translate(var(--dx,6px),var(--dy,-6px)) rotate(var(--dr,3deg))}50%{transform:translate(calc(var(--dx,6px)*-0.7),calc(var(--dy,-6px)*0.9)) rotate(calc(var(--dr,3deg)*-1))}75%{transform:translate(calc(var(--dx,6px)*0.6),calc(var(--dy,-6px)*-0.8)) rotate(var(--dr,3deg))}100%{transform:translate(0,0) rotate(0deg)}}
+  #mandalaSvg path.region.cf-bounce{transform-box:fill-box; transform-origin:center; animation:cfBounce .8s cubic-bezier(.18,.9,.3,1);}
+  .cf-ripple{position:absolute; width:26px; height:26px; margin:-13px 0 0 -13px; border-radius:50%; pointer-events:none; border:3px solid var(--accent); z-index:8; animation:cfRipple .68s cubic-bezier(.2,.7,.3,1) forwards;}
+  @keyframes cfRipple{0%{transform:scale(.2); opacity:.8}100%{transform:scale(6); opacity:0}}
   .sidetools{position:absolute; right:14px; bottom:6px; display:flex; flex-direction:column; gap:12px;}
   .tool{width:42px;height:42px;border-radius:50%;background:var(--panel);display:grid;place-items:center;border:none;cursor:pointer;color:var(--text); box-shadow:var(--card-shadow); transition:transform .08s, background .15s;}
   .tool:active{transform:scale(.90); background:var(--panel2);}
@@ -331,7 +332,7 @@
         <button class="btn btn-outline" onclick="openSettings('home')">SETTINGS</button>
       </div>
     </div>
-    <div class="version" id="ver">v1.15.9</div>
+    <div class="version" id="ver">v1.16.0</div>
   </section>
 
   <!-- ================= TUTORIAL ================= -->
@@ -649,7 +650,7 @@ const defaultState = {
   selected:'A1',
   progress:{},   // { A1:{regionId:color,...} }
   done:{},       // { A1:true }
-  cheats:{ unlockAll:false, gradient:false, trace:false, party:false, itsjeff:false, zerog:false, bounce:false, melt:false, quake:false, disco:false, showList:false }   // unlocked via codes on the Settings screen
+  cheats:{ unlockAll:false, gradient:false, trace:false, party:false, itsjeff:false, zerog:false, bounce:false, ripple:false, quake:false, disco:false, showList:false }   // unlocked via codes on the Settings screen
 };
 let state = load();
 function load(){
@@ -701,7 +702,7 @@ function applyCheat(){
   if(state.cheats.trace===undefined) state.cheats.trace=false;
   if(state.cheats.party===undefined) state.cheats.party=false;
   if(state.cheats.itsjeff===undefined) state.cheats.itsjeff=false;
-  ['zerog','bounce','melt','quake','disco','showList'].forEach(k=>{ if(state.cheats[k]===undefined) state.cheats[k]=false; });
+  ['zerog','bounce','ripple','quake','disco','showList'].forEach(k=>{ if(state.cheats[k]===undefined) state.cheats[k]=false; });
   if(code==='ALLSUPJI100'){
     state.cheats.unlockAll=!state.cheats.unlockAll;
     persist(); toast(state.cheats.unlockAll?'Cheat ON — all levels unlocked':'Cheat OFF — level locks restored');
@@ -727,14 +728,15 @@ function applyCheat(){
     stopMusicNode(); startMusicIfNeeded();   // swap the track immediately
     toast(state.cheats.itsjeff?"Cheat ON — it's Jeff, on repeat":'Cheat OFF — normal music');
   } else if(code==='ZEROG'){
-    state.cheats.zerog=!state.cheats.zerog; persist(); updateFx();
+    state.cheats.zerog=!state.cheats.zerog; persist();
+    if(curMandala && document.getElementById('screen-color').classList.contains('active')){ renderMandala(); applyTransform(); } else updateFx();
     toast(state.cheats.zerog?'Cheat ON — zero gravity':'Cheat OFF — gravity restored');
+  } else if(code==='RIPPLEMAN'){
+    state.cheats.ripple=!state.cheats.ripple; persist();
+    toast(state.cheats.ripple?'Cheat ON — ripples':'Cheat OFF — ripples off');
   } else if(code==='BOUNCEHOUSE'){
     state.cheats.bounce=!state.cheats.bounce; persist();
     toast(state.cheats.bounce?'Cheat ON — boing!':'Cheat OFF — no more bounce');
-  } else if(code==='MELTMAN'){
-    state.cheats.melt=!state.cheats.melt; persist(); updateFx();
-    toast(state.cheats.melt?'Cheat ON — meltdown':'Cheat OFF — solid again');
   } else if(code==='EARTHQUAKE'){
     state.cheats.quake=!state.cheats.quake; persist();
     if(state.cheats.quake) fxQuake();
@@ -797,7 +799,7 @@ function renderCheatStatus(){
   if(c.itsjeff) on.push("It's Jeff (looped)");
   if(c.zerog) on.push('Zero gravity');
   if(c.bounce) on.push('Bounce');
-  if(c.melt) on.push('Melt');
+  if(c.ripple) on.push('Ripple');
   if(c.quake) on.push('Earthquake');
   if(c.disco) on.push('Disco');
   el.textContent = on.length ? ('Active: '+on.join(' · ')) : '';
@@ -811,7 +813,7 @@ const CHEAT_LIST=[
   ['PARTYMAN','Confetti on every fill'],
   ['ZEROG','Pieces float in zero-G'],
   ['BOUNCEHOUSE','Shapes bounce when filled'],
-  ['MELTMAN','Melting wobble'],
+  ['RIPPLEMAN','Ripple where you tap'],
   ['EARTHQUAKE','Screen shakes on tap'],
   ['DISCO','Colour-cycling background'],
   ['OFFMAN','Turn all cheats off'],
@@ -830,30 +832,36 @@ function updateTrace(){
   const onColor=document.getElementById('screen-color').classList.contains('active');
   wrap.classList.toggle('trace-on', !!(state.cheats && state.cheats.trace) && onColor);
 }
-/* ---------- cheat FX (ZEROG / BOUNCEHOUSE / MELTMAN / EARTHQUAKE / DISCO) ---------- */
+/* ---------- cheat FX (ZEROG / BOUNCEHOUSE / EARTHQUAKE / DISCO) ---------- */
 let _qkTimer=null, _zgTimer=null;
 function updateFx(){
   const wrap=document.getElementById('canvasWrap'), z=document.getElementById('zoomg'), c=state.cheats||{};
   if(wrap) wrap.classList.toggle('fx-disco', !!c.disco);
-  if(z) z.classList.toggle('fx-melt', !!c.melt);
+ 
   syncZeroG();
 }
 function setFloatVars(p){
   const s=()=>Math.random()<.5?-1:1;
-  p.style.setProperty('--dx',((18+Math.random()*44)*s()).toFixed(1)+'px');
-  p.style.setProperty('--dy',((18+Math.random()*44)*s()).toFixed(1)+'px');
-  p.style.setProperty('--dr',((3+Math.random()*9)*s()).toFixed(1)+'deg');
-  p.style.setProperty('--dur',(4+Math.random()*4).toFixed(2)+'s');
-  p.style.setProperty('--delay',(-Math.random()*6).toFixed(2)+'s');
+  p.style.setProperty('--dx',((10+Math.random()*24)*s()).toFixed(1)+'px');
+  p.style.setProperty('--dy',((10+Math.random()*24)*s()).toFixed(1)+'px');
+  p.style.setProperty('--dr',((2+Math.random()*5)*s()).toFixed(1)+'deg');
+  p.style.setProperty('--dur',(6.5+Math.random()*4.5).toFixed(2)+'s');
+  p.style.setProperty('--delay',(-Math.random()*8).toFixed(2)+'s');
 }
 function clearFloatVars(p){ ['--dx','--dy','--dr','--dur','--delay'].forEach(v=>p.style.removeProperty(v)); }
 function syncZeroG(){
   if(!svgEl || !curMandala) return;
   const on=!!(state.cheats && state.cheats.zerog);
   const complete = on && progressPct()>=100;
+  const prog=state.progress[curMandala.id]||{};
   svgEl.querySelectorAll('path.region').forEach(p=>{
-    if(on && !complete){ if(!p.classList.contains('cf-float')) setFloatVars(p); p.classList.add('cf-float'); p.style.removeProperty('transform'); p.style.removeProperty('transition'); p.style.removeProperty('animation'); }
-    else { p.classList.remove('cf-float'); clearFloatVars(p); p.style.removeProperty('transform'); p.style.removeProperty('transition'); p.style.removeProperty('animation'); }
+    if(on && !complete){
+      if(!p.classList.contains('cf-float')) setFloatVars(p);
+      p.classList.add('cf-float'); p.style.removeProperty('transform'); p.style.removeProperty('transition'); p.style.removeProperty('animation');
+      if(prog[p.dataset.id] && gEl) gEl.insertBefore(p, gEl.firstChild);   // already-filled pieces sit behind the unfilled ones
+    } else {
+      p.classList.remove('cf-float'); clearFloatVars(p); p.style.removeProperty('transform'); p.style.removeProperty('transition'); p.style.removeProperty('animation');
+    }
   });
 }
 // when the last piece is filled, glide every piece smoothly back into place
@@ -863,7 +871,16 @@ function zeroGLand(){
   paths.forEach(p=>{ const m=getComputedStyle(p).transform; p.style.animation='none'; p.style.transform=(m && m!=='none')?m:'none'; });
   svgEl.getBoundingClientRect();   // reflow so the next transform animates from the captured spot
   paths.forEach(p=>{ p.style.transition='transform .75s cubic-bezier(.18,.7,.25,1)'; p.style.transform='none'; });
-  setTimeout(()=>{ paths.forEach(p=>{ p.classList.remove('cf-float'); clearFloatVars(p); p.style.removeProperty('animation'); p.style.removeProperty('transition'); p.style.removeProperty('transform'); }); }, 780);
+  setTimeout(()=>{
+    paths.forEach(p=>{ p.classList.remove('cf-float'); clearFloatVars(p); p.style.removeProperty('animation'); p.style.removeProperty('transition'); p.style.removeProperty('transform'); });
+    if(curMandala && document.getElementById('screen-color').classList.contains('active')){ renderMandala(); applyTransform(); }   // restore natural stacking order
+  }, 780);
+}
+function fxRipple(cx,cy){
+  const wrap=document.getElementById('canvasWrap'); if(!wrap) return;
+  const r=wrap.getBoundingClientRect(), x=cx-r.left, y=cy-r.top;
+  const mk=(delayMs)=>{ const d=document.createElement('div'); d.className='cf-ripple'; d.style.left=x+'px'; d.style.top=y+'px'; d.style.borderColor=(curColor||'var(--accent)'); d.style.animationDelay=delayMs+'ms'; wrap.appendChild(d); setTimeout(()=>d.remove(), 720+delayMs); };
+  mk(0); mk(120);
 }
 function fxQuake(){
   const w=document.getElementById('canvasWrap'); if(!w) return;
@@ -872,11 +889,13 @@ function fxQuake(){
 }
 function fxBounce(p){
   p.classList.remove('cf-bounce'); p.getBoundingClientRect(); p.classList.add('cf-bounce');
-  setTimeout(()=>p.classList.remove('cf-bounce'),660);
+  setTimeout(()=>p.classList.remove('cf-bounce'),820);
 }
 function fxOnFill(pathEl, next){
   const c=state.cheats||{};
   if(next!=null && c.bounce) fxBounce(pathEl);
+  if(next!=null && c.ripple) fxRipple(lastMove.x, lastMove.y);
+  if(next!=null && c.zerog && gEl) gEl.insertBefore(pathEl, gEl.firstChild);   // colored piece drops behind the unfilled ones
   if(c.quake) fxQuake();
 }
 function updateSliderOff(el){
@@ -1027,7 +1046,7 @@ function renderMandala(){
   // collect gradient colours present so we can predefine their defs
   const gset=new Set();
   geo.regions.forEach(r=>{ const v=fills[r.id]; if(v){ const f=parseFill(v); if(f.grad) gset.add(f.hex); } });
-  let defs='<filter id="meltFx" x="-12%" y="-12%" width="124%" height="150%" color-interpolation-filters="sRGB"><feTurbulence type="turbulence" baseFrequency="0.006 0.016" numOctaves="1" seed="5" result="n"><animate attributeName="baseFrequency" dur="9s" values="0.006 0.016;0.008 0.022;0.006 0.016" repeatCount="indefinite"/></feTurbulence><feDisplacementMap in="SourceGraphic" in2="n" scale="13" xChannelSelector="R" yChannelSelector="G"/></filter>';
+  let defs='';
   gset.forEach(h=>{ const [lt,dk]=gradStops(h); defs+=`<linearGradient id="cvg_${h.slice(1)}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${lt}"/><stop offset="1" stop-color="${dk}"/></linearGradient>`; });
   let inner='';
   geo.regions.forEach(r=>{
@@ -1839,10 +1858,11 @@ function _cfSetup(){
 }
 function confettiBurst(x,y,count,power){
   if(!_cfSetup()) return;
+  const rect=_cfCv.getBoundingClientRect(); const lx=x-rect.left, ly=y-rect.top;   // client -> canvas-local
   _cfCv.classList.add('on'); power=power||1;
   for(let i=0;i<count;i++){
     const a=Math.random()*Math.PI*2, sp=(2+Math.random()*6)*power;
-    _cfParts.push({ x:x, y:y, vx:Math.cos(a)*sp, vy:Math.sin(a)*sp-(2+Math.random()*3)*power,
+    _cfParts.push({ x:lx, y:ly, vx:Math.cos(a)*sp, vy:Math.sin(a)*sp-(2+Math.random()*3)*power,
       g:0.12+Math.random()*0.06, rot:Math.random()*6.28, vr:(Math.random()-.5)*0.45,
       size:5+Math.random()*7, color:_cfColors[(Math.random()*_cfColors.length)|0],
       life:0, max:55+Math.random()*45, shape:Math.random()<0.5?'rect':'circle' });
