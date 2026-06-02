@@ -292,7 +292,7 @@
         <button class="btn btn-outline" onclick="openSettings('home')">SETTINGS</button>
       </div>
     </div>
-    <div class="version" id="ver">v1.14.3</div>
+    <div class="version" id="ver">v1.14.6</div>
   </section>
 
   <!-- ================= TUTORIAL ================= -->
@@ -624,6 +624,7 @@ function go(name){
   if(name==='select') renderGallery();
   if(name==='palette') renderPalette();
   if(name==='settings') renderSettings();
+  if(name==='color') requestAnimationFrame(()=>{ if(swatchPages.length) gotoSwatchPage(swatchPage, true); });
   updateTrace();
   startMusicIfNeeded();
 }
@@ -634,7 +635,7 @@ function closeSettings(){ state.settings=settingsSnapshot; applyTheme(); go(open
 function saveSettings(){ persist(); toast('Settings saved'); go(openerOf.settings||'home'); }
 function openPalette(from){ openerOf.palette=from; paletteSnapshot=JSON.parse(JSON.stringify(state.palette)); go('palette'); }
 function closePalette(){ state.palette=paletteSnapshot; go(openerOf.palette||'home'); }
-function savePalette(){ persist(); toast('Palette saved'); if(curMandala) buildSwatches(); go(openerOf.palette||'select'); }
+function savePalette(){ const changed = JSON.stringify(state.palette)!==JSON.stringify(paletteSnapshot); persist(); toast('Palette saved'); if(curMandala){ buildSwatches(); if(changed) swatchPage=0; gotoSwatchPage(swatchPage,true); } go(openerOf.palette||'select'); }
 
 /* ---------- 6. Theme ---------- */
 function applyTheme(){ document.body.classList.toggle('dark', state.settings.theme==='dark'); document.querySelector('meta[name=theme-color]').setAttribute('content', state.settings.theme==='dark'?'#1e242d':'#f3f6fb'); renderHomeArt(); }
@@ -996,6 +997,7 @@ function rasterDropper(id){
 let swatchPages=[], swatchPage=0;
 let swatchDir=(state.settings.swatchDir==='v')?'v':'h';
 let trayExpanded=false;
+let palDirty=false;   // did the user change a palette colour while the tray was pulled up?
 let editSlot=0;   // which palette slot the editor is targeting
 
 const ICON_VERT  = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v16M12 4l-4 4M12 4l4 4M12 20l-4-4M12 20l4-4"/></svg>';
@@ -1034,11 +1036,11 @@ function buildCompactPager(body){
   const wrap=document.createElement('div'); wrap.className='tray-compact dir-'+swatchDir;
   const vp=document.createElement('div'); vp.className='swatch-viewport';
   const track=document.createElement('div'); track.className='swatch-track'+(swatchDir==='v'?' vert':''); track.id='swatchTrack';
-  swatchPages.forEach(page=>{
-    const pg=document.createElement('div'); pg.className='swatch-page';
-    page.forEach(c=>pg.appendChild(mkSwatch(c,false)));
-    track.appendChild(pg);
-  });
+  const addPage=(page)=>{ const pg=document.createElement('div'); pg.className='swatch-page'; page.forEach(c=>pg.appendChild(mkSwatch(c,false))); track.appendChild(pg); };
+  const N=swatchPages.length, loop=N>1;
+  if(loop) addPage(swatchPages[N-1]);   // leading clone (= last page) for seamless backward wrap
+  swatchPages.forEach(addPage);
+  if(loop) addPage(swatchPages[0]);     // trailing clone (= palette) for seamless forward wrap
   vp.appendChild(track);
   const dir=document.createElement('button'); dir.className='tray-dir'; dir.setAttribute('aria-label','Toggle layout');
   dir.innerHTML = swatchDir==='h'?ICON_HORIZ:ICON_VERT;
@@ -1088,6 +1090,7 @@ function selectEditSlot(i){
 function assignColorToSlot(c){
   state.palette[editSlot]=c;
   if(swatchPages[0]) swatchPages[0][editSlot]=c;   // keep the compact palette page in sync
+  palDirty=true;                                   // a colour changed -> land on palette when closing
   persist(); curColor=c; isEraser=false; colorChosen=true; sfxPop();
   const slot=document.querySelector(`#colorTray .pal-slot[data-slot="${editSlot}"]`);
   if(slot){ slot.style.background=c; slot.dataset.color=c; }
@@ -1100,6 +1103,7 @@ function updateEditor(){
 function resetPalette(){
   state.palette=DEFAULT_PALETTE.slice();
   if(swatchPages[0]) swatchPages[0]=state.palette.slice();
+  palDirty=true;
   if(editSlot>=state.palette.length) editSlot=0;
   curColor=state.palette[editSlot]; isEraser=false;
   persist(); sfxPop();
@@ -1108,17 +1112,35 @@ function resetPalette(){
   toast('Palette reset to default');
 }
 
-function gotoSwatchPage(i, instant){
-  swatchPage=Math.max(0, Math.min(swatchPages.length-1, i));
+let wrapTimer=null;
+function leadOffset(){ return swatchPages.length>1?1:0; }   // one leading clone slot when looping
+function curTranslate(track, vert){
+  const tr=getComputedStyle(track).transform;
+  if(!tr || tr==='none') return 0;
+  const m=new DOMMatrix(tr); return vert?m.m42:m.m41;
+}
+function setTrackToSlot(slot, instant){
   const track=document.getElementById('swatchTrack'); if(!track) return;
   const vp=track.parentElement, vert=swatchDir==='v';
-  const gap=parseFloat(getComputedStyle(track)[vert?'rowGap':'columnGap'])||0;
-  const size=vert?vp.clientHeight:vp.clientWidth;
-  const off=swatchPage*(size+gap);
+  const pageEl=track.children[slot]; if(!pageEl) return;
+  // Align this page's leading edge to the viewport's, using MEASURED positions so the
+  // result can't drift from per-page stride/gap/sub-pixel math (the iOS snap-off bug).
+  const pr=pageEl.getBoundingClientRect(), vr=vp.getBoundingClientRect();
+  if(!vr.width && !vr.height) return;                  // screen hidden -> skip (go('color') re-runs it)
+  const delta = vert ? (pr.top - vr.top) : (pr.left - vr.left);
+  const target = curTranslate(track, vert) - delta;
   if(instant) track.style.transition='none';
-  track.style.transform = vert ? `translateY(${-off}px)` : `translateX(${-off}px)`;
+  track.style.transform = vert ? `translateY(${target}px)` : `translateX(${target}px)`;
   if(instant) requestAnimationFrame(()=>{ track.style.transition=''; });
 }
+function gotoSwatchPage(i, instant){
+  const N=swatchPages.length||1;
+  swatchPage=((i%N)+N)%N;                       // wrap the logical page index
+  setTrackToSlot(swatchPage+leadOffset(), instant);
+}
+/* Seamless infinite wrap: glide onto the cloned edge page, then jump (no animation) to the real one. */
+function wrapNext(){ const N=swatchPages.length; setTrackToSlot(N+1, false); clearTimeout(wrapTimer); wrapTimer=setTimeout(()=>{ swatchPage=0;   setTrackToSlot(1, true); }, 320); }
+function wrapPrev(){ const N=swatchPages.length; setTrackToSlot(0,   false); clearTimeout(wrapTimer); wrapTimer=setTimeout(()=>{ swatchPage=N-1; setTrackToSlot(N, true); }, 320); }
 
 function selectSwatchColor(c){
   curColor=c; isEraser=false; colorChosen=true; refreshSwatchActive(); sfxPop();
@@ -1134,7 +1156,7 @@ function setupSwatchSwipe(vp, track){
     pressed = e.target && e.target.closest ? e.target.closest('.swatch-page .sw') : null;
     size = horiz()?vp.clientWidth:vp.clientHeight;
     gap = parseFloat(getComputedStyle(track)[horiz()?'columnGap':'rowGap'])||0;
-    base=-swatchPage*(size+gap); track.style.transition='none';
+    base=curTranslate(track, !horiz()); track.style.transition='none';   // continue from where we are
     try{ vp.setPointerCapture(e.pointerId); }catch(_){}
   });
   vp.addEventListener('pointermove', e=>{
@@ -1143,7 +1165,7 @@ function setupSwatchSwipe(vp, track){
     if(!dragging && Math.abs(main)<6) return;
     if(!dragging && Math.abs(cross)>Math.abs(main)) return;
     dragging=true;
-    let t=base+main; const min=-(swatchPages.length-1)*(size+gap), max=0;
+    let t=base+main; const lead=leadOffset(); const min=-(swatchPages.length-1+2*lead)*(size+gap), max=0;
     if(t>max) t=max+(t-max)*0.35; else if(t<min) t=min+(t-min)*0.35;
     track.style.transform = horiz()?`translateX(${t}px)`:`translateY(${t}px)`;
   });
@@ -1151,8 +1173,12 @@ function setupSwatchSwipe(vp, track){
     if(!down) return; down=false; track.style.transition='';
     const main=(horiz()?e.clientX:e.clientY)-s;
     if(dragging){
-      if(Math.abs(main)>size*0.16) gotoSwatchPage(swatchPage + (main<0?1:-1));
-      else gotoSwatchPage(swatchPage);
+      if(Math.abs(main)>size*0.16){
+        const dir=main<0?1:-1, t=swatchPage+dir, N=swatchPages.length;
+        if(N>1 && t>=N) wrapNext();
+        else if(N>1 && t<0) wrapPrev();
+        else gotoSwatchPage(t);
+      } else gotoSwatchPage(swatchPage);
     } else if(pressed && pressed.dataset.color){
       selectSwatchColor(pressed.dataset.color);
     }
@@ -1187,8 +1213,8 @@ function sizeTray(){
     tray.style.height='';   // fall back to the CSS compact height
   }
 }
-function expandTray(){ if(trayExpanded) return; trayExpanded=true; document.getElementById('colorTray').classList.add('expanded'); buildTrayBody(); sizeTray(); sfxPop(); }
-function collapseTray(){ if(!trayExpanded) return; trayExpanded=false; const t=document.getElementById('colorTray'); t.classList.remove('expanded'); t.style.height=''; buildTrayBody(); setTimeout(refreshCanvasFit, 360); }
+function expandTray(){ if(trayExpanded) return; trayExpanded=true; palDirty=false; document.getElementById('colorTray').classList.add('expanded'); buildTrayBody(); sizeTray(); sfxPop(); }
+function collapseTray(){ if(!trayExpanded) return; trayExpanded=false; if(palDirty) swatchPage=0; palDirty=false; const t=document.getElementById('colorTray'); t.classList.remove('expanded'); t.style.height=''; buildTrayBody(); setTimeout(refreshCanvasFit, 360); }
 function toggleTray(){ trayExpanded?collapseTray():expandTray(); }
 document.getElementById('colorTray').addEventListener('transitionend', e=>{ if(e.propertyName==='height') refreshCanvasFit(); });
 function toggleDir(){ swatchDir = (swatchDir==='h')?'v':'h'; state.settings.swatchDir=swatchDir; persist(); if(!trayExpanded) buildTrayBody(); updateDirIcon(); sfxPop(); }
@@ -1538,7 +1564,10 @@ function innerOf(svgStr){ return svgStr.replace(/^<svg[^>]*>/,'').replace(/<\/sv
 /* ---------- 13. Audio ---------- */
 /* SFX stays synthesized (offline, instant). Music is a looped MP3 file. */
 let actx=null, sfxGain=null;
-let bgBuffer=null, musicGain=null, musicNode=null, musicLoading=false, musicWantsPlay=false;
+let musicGain=null, musicNode=null, musicWantsPlay=false;
+/* Two tracks: an intro that plays ONCE, then the main track that loops forever. */
+let loopBuf=null, introBuf=null, loopSettled=false, introSettled=false, loopLoading=false, introLoading=false;
+let introDone=false;   // becomes true once the intro has started (so it only ever plays once)
 function initAudio(){
   if(actx) return;
   try{
@@ -1546,30 +1575,40 @@ function initAudio(){
     sfxGain=actx.createGain(); sfxGain.connect(actx.destination);
     musicGain=actx.createGain(); musicGain.gain.value=musicVol(); musicGain.connect(actx.destination);
   }catch(e){}
-  loadMusicBuffer();
+  loadMusicBuffers();
 }
 function musicVol(){ return Math.max(0, Math.min(1, state.settings.music/100)); }
 /* iOS Safari's createMediaElementSource frequently outputs silence, so instead we decode the
-   MP3 into a buffer and loop it through a GainNode. This plays reliably on iOS AND lets the
-   volume slider work (iOS ignores HTMLMediaElement.volume entirely). */
-function loadMusicBuffer(){
-  if(!actx || bgBuffer || musicLoading) return;
-  musicLoading=true;
-  fetch('music.mp3').then(r=>r.arrayBuffer()).then(buf=>new Promise((resolve,reject)=>{
+   MP3s into buffers and play them through a GainNode. Reliable on iOS AND the slider works. */
+function decodeURL(url){
+  return fetch(url).then(r=>r.arrayBuffer()).then(buf=>new Promise((resolve,reject)=>{
     let ret; try{ ret=actx.decodeAudioData(buf, resolve, reject); }catch(e){ reject(e); return; }
     if(ret && typeof ret.then==='function') ret.then(resolve,reject);   // modern promise form
-  })).then(b=>{ bgBuffer=b; musicLoading=false; if(musicWantsPlay) startMusicNode(); })
-    .catch(()=>{ musicLoading=false; });
+  }));
+}
+function loadIntro(){ if(!actx||introBuf||introLoading) return; introLoading=true;
+  decodeURL('its-jeff-song.mp3').then(b=>{introBuf=b;}).catch(()=>{}).finally(()=>{ introLoading=false; introSettled=true; if(musicWantsPlay) startMusicNode(); }); }
+function loadLoop(){ if(!actx||loopBuf||loopLoading) return; loopLoading=true;
+  decodeURL('music.mp3').then(b=>{loopBuf=b;}).catch(()=>{}).finally(()=>{ loopLoading=false; loopSettled=true; if(musicWantsPlay) startMusicNode(); }); }
+function loadMusicBuffers(){ loadIntro(); loadLoop(); }
+function playSource(buf, loop, isIntro){
+  const n=actx.createBufferSource(); n.buffer=buf; n.loop=loop; n.connect(musicGain); musicNode=n;
+  if(isIntro){ n.onended=()=>{ if(musicNode===n){ musicNode=null; if(musicWantsPlay) startMusicNode(); } }; }
+  try{ n.start(0); }catch(_){}
 }
 function startMusicNode(){
-  if(!actx || !bgBuffer || musicNode) return;
-  musicNode=actx.createBufferSource();
-  musicNode.buffer=bgBuffer; musicNode.loop=true;
-  musicNode.connect(musicGain);
-  try{ musicNode.start(0); }catch(_){}
+  if(!actx || musicNode || !musicWantsPlay) return;
+  if(!introDone){                                  // play the intro once, first
+    if(introBuf){ introDone=true; playSource(introBuf, false, true); return; }
+    if(introSettled){ introDone=true; }            // intro failed to load -> skip straight to the loop
+    else { loadIntro(); return; }                  // still decoding -> wait; loader will retry
+  }
+  if(loopBuf){ playSource(loopBuf, true, false); } // main track loops forever
+  else if(!loopSettled){ loadLoop(); }             // wait for it; loader will retry
 }
 function stopMusicNode(){
   if(!musicNode) return;
+  try{ musicNode.onended=null; }catch(_){}
   try{ musicNode.stop(); }catch(_){}
   try{ musicNode.disconnect(); }catch(_){}
   musicNode=null;
@@ -1592,7 +1631,7 @@ function startMusicIfNeeded(){
   if(state.settings.music>0){
     musicWantsPlay=true;
     if(actx && actx.state==='suspended'){ try{ actx.resume(); }catch(_){} }
-    if(bgBuffer) startMusicNode(); else loadMusicBuffer();
+    startMusicNode();
   } else {
     musicWantsPlay=false;
     stopMusicNode();
