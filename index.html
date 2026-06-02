@@ -292,7 +292,7 @@
         <button class="btn btn-outline" onclick="openSettings('home')">SETTINGS</button>
       </div>
     </div>
-    <div class="version" id="ver">v1.14.7</div>
+    <div class="version" id="ver">v1.14.8</div>
   </section>
 
   <!-- ================= TUTORIAL ================= -->
@@ -1598,6 +1598,7 @@ function playSource(buf, loop, isIntro){
 }
 function startMusicNode(){
   if(!actx || musicNode || !musicWantsPlay) return;
+  if(actx.state!=='running'){ try{ actx.resume(); }catch(_){} return; }  // iOS: only start once truly running
   if(!introDone){                                  // play the intro once, first
     if(introBuf){ introDone=true; playSource(introBuf, false, true); return; }
     if(introSettled){ introDone=true; }            // intro failed to load -> skip straight to the loop
@@ -1643,14 +1644,18 @@ function updateMusicVol(){ initAudio(); applyMusicVol(); startMusicIfNeeded(); }
 let toastTimer=null;
 function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'),1700); }
 
-// Start audio on the first interaction (browser/iOS autoplay policy) — resume INSIDE the gesture
+// Start audio on the first interaction (browser/iOS autoplay policy). iOS needs resume() inside a
+// gesture; we keep listening until the context is genuinely 'running', then start + stop listening.
+const UNLOCK_EVENTS=['pointerdown','touchstart','touchend','mousedown','keydown','click'];
 function unlockAudio(){
   initAudio();
-  const start=()=>startMusicIfNeeded();
-  if(actx && actx.state==='suspended'){ try{ actx.resume().then(start, start); }catch(_){ start(); } } else start();
-  ['pointerdown','touchstart','touchend','mousedown','keydown','click'].forEach(ev=>document.removeEventListener(ev,unlockAudio,true));
+  musicWantsPlay = state.settings.music>0;
+  if(!actx) return;
+  const go=()=>{ if(actx.state==='running'){ startMusicNode(); UNLOCK_EVENTS.forEach(ev=>document.removeEventListener(ev,unlockAudio,true)); } };
+  try{ actx.resume().then(go, ()=>{}); }catch(_){}
+  go();   // in case it's already running
 }
-['pointerdown','touchstart','touchend','mousedown','keydown','click'].forEach(ev=>document.addEventListener(ev,unlockAudio,true));
+UNLOCK_EVENTS.forEach(ev=>document.addEventListener(ev,unlockAudio,true));
 
 /* Try to start the music the instant the menu appears. Browsers block autoplay-with-sound until
    a user gesture EXCEPT for installed PWAs and pages the browser already trusts — there this starts
