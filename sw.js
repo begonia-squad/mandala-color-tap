@@ -1,7 +1,7 @@
 /* Mandala Color Tap - service worker
    Bump CACHE on every release so updates roll out automatically. */
-const CACHE = 'mandala-v1.16.1';
-const ASSETS = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './music.mp3', './its-jeff-song.mp3'];
+const CACHE = 'mandala-v2.0.0';
+const ASSETS = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './music.mp3', './its-jeff-song.mp3', './tut1.png', './tut2.png', './tut3.png', './tut4.png', './tut5.png', './tut6.png', './tut7.png'];
 
 self.addEventListener('install', (e) => {
   self.skipWaiting();

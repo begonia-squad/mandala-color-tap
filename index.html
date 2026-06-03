@@ -84,19 +84,19 @@
   .btn-begin svg{width:18px; height:18px;}
 
   /* ---------- HOME ---------- */
-  #screen-home{align-items:center; justify-content:flex-start; padding:0; overflow-y:auto; -webkit-overflow-scrolling:touch;
+  #screen-home{align-items:center; justify-content:center; padding:0 0 40px; overflow-y:auto; -webkit-overflow-scrolling:touch;
     background:
       radial-gradient(120% 80% at 50% 120%, var(--accent-soft) 0%, rgba(0,0,0,0) 60%),
       var(--bg);}
   .home-art{position:absolute; top:-44px; left:-64px; width:64%; max-width:340px; pointer-events:none; opacity:.98; animation:floaty 4.2s ease-in-out infinite; transform-origin:40% 40%;}
   @keyframes floaty{0%,100%{transform:translateY(0) rotate(0deg);} 50%{transform:translateY(10px) rotate(2deg);}}
-  .home-mid{flex:1 0 auto; display:flex; flex-direction:column; align-items:center; width:100%; padding:0 28px;}
-  .home-title{font-family:"Nunito",-apple-system,sans-serif; font-size:clamp(30px,13vw,56px); line-height:.95; font-weight:800; text-align:center; letter-spacing:-.5px; margin-top:auto;}
+  .home-mid{flex:0 1 auto; display:flex; flex-direction:column; align-items:center; width:100%; padding:0 28px;}
+  .home-title{font-family:"Nunito",-apple-system,sans-serif; font-size:clamp(30px,13vw,56px); line-height:.95; font-weight:800; text-align:center; letter-spacing:-.5px; margin-top:0;}
   @media(min-width:480px){ .home-title{font-size:56px;} }
-  .home-sub{color:var(--accent); font-weight:800; margin-top:16px; margin-bottom:clamp(30px,7vh,90px); font-size:15px; letter-spacing:.4px; text-align:center;}
-  .home-btns{width:100%; max-width:380px; display:flex; flex-direction:column; gap:14px; margin-top:auto; margin-bottom:26px; padding:0 4px;}
+  .home-sub{color:var(--accent); font-weight:800; margin-top:16px; margin-bottom:0; font-size:15px; letter-spacing:.4px; text-align:center;}
+  .home-btns{position:absolute; left:50%; bottom:calc(48px + env(safe-area-inset-bottom)); transform:translateX(-50%); width:100%; max-width:380px; display:flex; flex-direction:column; gap:14px; padding:0 28px;}
   /* short screens: tighten so the title never crowds the buttons */
-  @media(max-height:680px){ .home-title{font-size:clamp(26px,10.5vw,46px);} .home-sub{margin-top:10px; margin-bottom:clamp(20px,4vh,44px);} }
+  @media(max-height:680px){ .home-title{font-size:clamp(26px,10.5vw,46px);} .home-sub{margin-top:10px;} }
   .home-btns .btn{padding:19px; font-size:18px; text-align:center; opacity:0; animation:riseIn .5s cubic-bezier(.2,.7,.3,1) forwards;}
   .home-btns .btn:nth-child(1){animation-delay:.10s;}
   .home-btns .btn:nth-child(2){animation-delay:.20s;}
@@ -105,7 +105,7 @@
   .btn-dark{background:var(--btn-dark); color:var(--btn-dark-text); box-shadow:var(--card-shadow);}
   .btn-outline{background:transparent; color:var(--text); border:2px solid color-mix(in srgb, var(--text) 22%, transparent);}
   .btn-outline:active{background:var(--panel);}
-  .version{color:var(--muted); font-size:12px; letter-spacing:1px; padding-bottom:calc(16px + env(safe-area-inset-bottom)); opacity:.7;}
+  .version{position:absolute; left:0; right:0; bottom:0; text-align:center; color:var(--muted); font-size:12px; letter-spacing:1px; padding-bottom:calc(12px + env(safe-area-inset-bottom)); opacity:.7;}
 
   /* ---------- SETTINGS ---------- */
   .ui-modes{display:flex; gap:28px; margin-bottom:12px;}
@@ -294,11 +294,14 @@
   .sw.editing .pin{opacity:1;}
 
   /* ---------- TUTORIAL ---------- */
-  .tut-step{display:flex; gap:16px; align-items:flex-start; margin-bottom:26px;}
-  .tut-num{flex:none; width:42px;height:42px;border-radius:50%;background:var(--accent);color:#fff;display:grid;place-items:center;font-weight:800;font-size:18px;font-family:Georgia,serif;}
-  .tut-step h3{font-size:18px; margin-bottom:5px;}
-  .tut-step p{font-size:15px; color:var(--muted); line-height:1.5;}
-  .tut-demo{margin:6px auto 30px; width:200px; height:200px;}
+  .tut-intro{color:var(--muted); font-size:15px; line-height:1.55; margin:2px 0 26px;}
+  .tut-step{margin-bottom:30px;}
+  .tut-head{display:flex; gap:12px; align-items:center; margin-bottom:8px;}
+  .tut-num{flex:none; width:34px;height:34px;border-radius:50%;background:var(--accent);color:#fff;display:grid;place-items:center;font-weight:800;font-size:16px;}
+  .tut-step h3{font-size:18px; margin:0;}
+  .tut-step p{font-size:15px; color:var(--muted); line-height:1.55; margin:0;}
+  .tut-shot{display:block; width:100%; margin:14px 0 0; border-radius:14px; border:1px solid color-mix(in srgb, var(--text) 12%, transparent); box-shadow:var(--card-shadow); background:var(--panel);}
+  .tut-shot.tall{width:auto; max-height:320px; margin-left:auto; margin-right:auto;}
 
   .toast{position:absolute; left:50%; bottom:96px; transform:translateX(-50%) translateY(20px); background:var(--btn-dark); color:#fff; padding:11px 20px; border-radius:99px; font-size:14px; font-weight:700; opacity:0; pointer-events:none; transition:.25s; z-index:50;}
   #confettiCanvas{position:absolute; inset:0; width:100%; height:100%; pointer-events:none; z-index:300; display:none;}
@@ -332,7 +335,7 @@
         <button class="btn btn-outline" onclick="openSettings('home')">SETTINGS</button>
       </div>
     </div>
-    <div class="version" id="ver">v1.16.1</div>
+    <div class="version" id="ver">v2.0.0</div>
   </section>
 
   <!-- ================= TUTORIAL ================= -->
@@ -346,14 +349,42 @@
       </div>
     </div>
     <div class="content">
-      <svg class="tut-demo" id="tutDemo" viewBox="0 0 100 100"></svg>
-      <div class="tut-step"><div class="tut-num">1</div><div><h3>Pick a mandala</h3><p>Tap START, choose a design from the gallery, then press BEGIN. New designs unlock as you finish the ones before them.</p></div></div>
-      <div class="tut-step"><div class="tut-num">2</div><div><h3>Tap to color</h3><p>Tap any shape to fill it with your selected color. Tap it again with a different color to change it.</p></div></div>
-      <div class="tut-step"><div class="tut-num">3</div><div><h3>The color bar</h3><p>Along the bottom is your five-color palette plus the eraser (white swatch with the red ring). Swipe the bar to browse every available color — it loops around — and tap the &#8646; button to switch the bar between horizontal and vertical.</p></div></div>
-      <div class="tut-step"><div class="tut-num">4</div><div><h3>Make your palette</h3><p>Pull the bar up to open the palette editor: tap a slot, then choose any swatch from All Colors to drop it in. Close it and your new palette is ready in the bar. (You can also edit it from COLOR PALETTE on the menu.)</p></div></div>
-      <div class="tut-step"><div class="tut-num">5</div><div><h3>Handy tools</h3><p>Tap the gear on the right for extra tools: a brush to fill by dragging across shapes, an eyedropper to grab a color straight from your artwork, and a reset to start the mandala over.</p></div></div>
-      <div class="tut-step"><div class="tut-num">6</div><div><h3>Zoom, pan &amp; undo</h3><p>Pinch to zoom into the fine center detail and drag to move around. Tap the frame button to fit the whole mandala again, and the curved arrow to undo your last fill.</p></div></div>
-      <div class="tut-step"><div class="tut-num">7</div><div><h3>Save &amp; personalize</h3><p>Your work saves automatically on this device — tap the check mark to mark a mandala complete. In Settings you can switch between Light and Dark themes and set the music and sound volume. It all works fully offline, no internet ever.</p></div></div>
+      <p class="tut-intro">A quick tour of everything you can do. Your work saves on this device and it all runs fully offline — no internet, ever.</p>
+      <div class="tut-step">
+        <div class="tut-head"><span class="tut-num">1</span><h3>Pick a mandala</h3></div>
+        <p>Tap START, choose a design from the gallery, then press BEGIN. New designs unlock as you finish the ones before them.</p>
+        <img class="tut-shot" onerror="this.style.display='none'" src="tut1.png" alt="The mandala gallery with the first design selected" loading="lazy">
+      </div>
+      <div class="tut-step">
+        <div class="tut-head"><span class="tut-num">2</span><h3>Tap to color</h3></div>
+        <p>Tap any shape to fill it with your selected color. Tap it again with a different color to change it.</p>
+        <img class="tut-shot" onerror="this.style.display='none'" src="tut2.png" alt="A mandala being colored in" loading="lazy">
+      </div>
+      <div class="tut-step">
+        <div class="tut-head"><span class="tut-num">3</span><h3>The color bar</h3></div>
+        <p>Along the bottom is your five-color palette plus the eraser (the white swatch with the red ring). Swipe the bar to browse every available color — it loops around — and tap the &#8646; button to switch the bar between horizontal and vertical.</p>
+        <img class="tut-shot" onerror="this.style.display='none'" src="tut3.png" alt="The color bar at the bottom of the screen" loading="lazy">
+      </div>
+      <div class="tut-step">
+        <div class="tut-head"><span class="tut-num">4</span><h3>Make your palette</h3></div>
+        <p>Pull the color bar up to open the palette editor: tap a slot, then choose any swatch from All Colors to drop it in. Close it and your new palette is ready in the bar. (You can also edit it from COLOR PALETTE in the menu.)</p>
+        <img class="tut-shot" onerror="this.style.display='none'" src="tut4.png" alt="The pull-up palette editor" loading="lazy">
+      </div>
+      <div class="tut-step">
+        <div class="tut-head"><span class="tut-num">5</span><h3>Handy tools</h3></div>
+        <p>Tap the <strong>Up Arrow</strong> on the right to open extra tools: a brush to fill by dragging across shapes, an eyedropper to grab a color straight from your artwork, and a reset to start the mandala over.</p>
+        <img class="tut-shot tall" onerror="this.style.display='none'" src="tut5.png" alt="The side tool buttons opened from the up arrow" loading="lazy">
+      </div>
+      <div class="tut-step">
+        <div class="tut-head"><span class="tut-num">6</span><h3>Zoom, pan &amp; undo</h3></div>
+        <p>Pinch to zoom into the fine center detail and drag to move around. Tap the frame button to fit the whole mandala again, and the curved arrow at the top of the side buttons to undo your last fill.</p>
+        <img class="tut-shot" onerror="this.style.display='none'" src="tut6.png" alt="A mandala zoomed in to show center detail" loading="lazy">
+      </div>
+      <div class="tut-step">
+        <div class="tut-head"><span class="tut-num">7</span><h3>Save &amp; personalize</h3></div>
+        <p>Tap the check mark in the top bar to mark a mandala complete. In Settings you can switch between Light and Dark themes and set the music and sound volume.</p>
+        <img class="tut-shot" onerror="this.style.display='none'" src="tut7.png" alt="The Settings screen with theme and sound options" loading="lazy">
+      </div>
     </div>
     <div class="footer" style="justify-content:center">
       <button class="btn btn-accent btn-save" style="width:100%;max-width:360px" onclick="go('select')">GOT IT — START COLORING</button>
@@ -1750,10 +1781,6 @@ function renderHomeArt(){
   const fills={}; let n=0;
   geo.regions.forEach(r=>{ if(!r.hub && (n++%2===0||r.id.startsWith('p'))) fills[r.id]=pal[n%pal.length]; });
   document.getElementById('homeArt').innerHTML = innerOf(mandalaSVGString(geo, fills, {sw:1.6}));
-  // tutorial demo (A6) lightly colored
-  const g2=MANDALAS[5].geo; const f2={}; let m=0;
-  g2.regions.forEach(r=>{ if(!r.hub && m++%3===0) f2[r.id]=['#2f7ce8','#8fc1ff','#1f9fc4'][m%3]; });
-  document.getElementById('tutDemo').innerHTML = innerOf(mandalaSVGString(g2, f2, {sw:1.6}));
 }
 function innerOf(svgStr){ return svgStr.replace(/^<svg[^>]*>/,'').replace(/<\/svg>$/,''); }
 
